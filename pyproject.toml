@@ -1,0 +1,6 @@
+[tool.ruff.lint]
+# B008 ("no function calls in argument defaults") flags FastAPI's own
+# dependency-injection pattern — `Depends(...)` as a parameter default is how
+# FastAPI is designed to be used, not a bug. Ignoring it here instead of
+# rewriting every route to the Annotated[...] form.
+ignore = ["B008"]
