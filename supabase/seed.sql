@@ -90,17 +90,20 @@ from auth.users u
 where u.email like '%@nafil.test';
 
 -- ── Profiles (rows auto-created by the signup trigger) ───────────────────
-update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='resident', unit_no='B12', phone='+2348031234567', approved=true where id='a0000000-0000-4000-8000-000000000001';
-update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='resident', unit_no='A04', phone='+2348039876543', approved=true where id='a0000000-0000-4000-8000-000000000002';
-update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='security', phone='+2348051112222', approved=true where id='a0000000-0000-4000-8000-000000000003';
-update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='admin',    phone='+2348064445555', approved=true where id='a0000000-0000-4000-8000-000000000004';
-update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='super_admin', phone='+2348077778888', approved=true where id='a0000000-0000-4000-8000-000000000005';
+-- avatar_url points at i.pravatar.cc — a placeholder-avatar service made for
+-- exactly this (stable per-seed photo, no real person's image or usage-rights
+-- question). ?img=N pins a specific face rather than the random default.
+update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='resident', unit_no='B12', phone='+2348031234567', approved=true, avatar_url='https://i.pravatar.cc/300?img=47' where id='a0000000-0000-4000-8000-000000000001';
+update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='resident', unit_no='A04', phone='+2348039876543', approved=true, avatar_url='https://i.pravatar.cc/300?img=12' where id='a0000000-0000-4000-8000-000000000002';
+update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='security', phone='+2348051112222', approved=true, avatar_url='https://i.pravatar.cc/300?img=53' where id='a0000000-0000-4000-8000-000000000003';
+update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='admin',    phone='+2348064445555', approved=true, avatar_url='https://i.pravatar.cc/300?img=32' where id='a0000000-0000-4000-8000-000000000004';
+update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='super_admin', phone='+2348077778888', approved=true, avatar_url='https://i.pravatar.cc/300?img=68' where id='a0000000-0000-4000-8000-000000000005';
 -- profile-complete, awaiting admin review — see the join request below
-update profiles set phone='+2348099990000', approved=false where id='a0000000-0000-4000-8000-000000000006';
-update profiles set estate_id='22222222-2222-2222-2222-222222222222', role='resident', unit_no='H21', phone='+2348012223333', approved=true where id='b0000000-0000-4000-8000-000000000001';
--- newresident@nafil.test: left untouched — no phone, no estate, unapproved.
+update profiles set phone='+2348099990000', approved=false, avatar_url='https://i.pravatar.cc/300?img=29' where id='a0000000-0000-4000-8000-000000000006';
+update profiles set estate_id='22222222-2222-2222-2222-222222222222', role='resident', unit_no='H21', phone='+2348012223333', approved=true, avatar_url='https://i.pravatar.cc/300?img=44' where id='b0000000-0000-4000-8000-000000000001';
+-- newresident@nafil.test: left untouched — no phone, no estate, unapproved, no avatar.
 -- rejected@nafil.test: profile complete, but no estate — see the rejected request below.
-update profiles set phone='+2348088889999', approved=false where id='a0000000-0000-4000-8000-000000000008';
+update profiles set phone='+2348088889999', approved=false, avatar_url='https://i.pravatar.cc/300?img=15' where id='a0000000-0000-4000-8000-000000000008';
 
 -- ── Estate join requests (the new onboarding model) ──────────────────────
 insert into estate_join_requests (profile_id, estate_id, unit_no, status, created_at) values
