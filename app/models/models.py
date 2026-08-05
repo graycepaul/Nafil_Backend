@@ -50,6 +50,16 @@ class Profile(Base):
     estate: Mapped[Estate | None] = relationship(back_populates="profiles")
 
 
+class PushToken(Base):
+    __tablename__ = "push_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id"))
+    token: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    platform: Mapped[str | None] = mapped_column(String)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class VisitorPass(Base):
     __tablename__ = "visitor_passes"
 

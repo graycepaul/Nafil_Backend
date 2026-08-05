@@ -23,6 +23,7 @@ class CurrentUser:
     id: str
     email: str | None
     role: str | None  # profiles.role — looked up from the DB, never trusted from the token
+    estate_id: str | None
 
 
 def _fetch_jwks() -> list[dict]:
@@ -106,6 +107,7 @@ def get_current_user(
         id=user_id,
         email=payload.get("email"),
         role=profile.role if profile else None,
+        estate_id=str(profile.estate_id) if profile and profile.estate_id else None,
     )
 
 
