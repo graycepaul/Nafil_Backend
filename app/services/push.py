@@ -61,7 +61,7 @@ def send_push_notifications(
                     # is ignored there) — this is for iOS, which reads it per
                     # message. Must match a sound bundled via app.json's
                     # expo-notifications plugin config.
-                    "sound": "emergency-alert.wav",
+                    "sound": "emergency_alert.wav",
                     "priority": "high",
                     "channelId": "emergency",
                     # Best available without Apple's Critical Alerts entitlement
