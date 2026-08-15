@@ -56,9 +56,19 @@ def send_push_notifications(
                     "title": title,
                     "body": body,
                     "data": data or {},
-                    "sound": "default",
+                    # Android's sound is actually set by the "emergency" channel
+                    # itself (channels own their sound once created; this field
+                    # is ignored there) — this is for iOS, which reads it per
+                    # message. Must match a sound bundled via app.json's
+                    # expo-notifications plugin config.
+                    "sound": "emergency-alert.wav",
                     "priority": "high",
                     "channelId": "emergency",
+                    # Best available without Apple's Critical Alerts entitlement
+                    # (which only Apple can grant, not this backend): lets the
+                    # alert break through the recipient's Focus/DND filtering,
+                    # but still respects the physical silent switch.
+                    "interruptionLevel": "timeSensitive",
                 }
                 for token in batch
             ]
