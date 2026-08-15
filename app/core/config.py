@@ -21,5 +21,12 @@ class Settings(BaseSettings):
     environment: str = "development"
     cors_origins: list[str] = ["*"]
 
+    # Optional: an Expo access token scopes/authenticates push-send requests
+    # to this project specifically. Not required to send push at all — Expo's
+    # push API works without it — but recommended once you have an EAS
+    # project, so an unrelated app's leaked push tokens can't be used to spam
+    # notifications through your account.
+    expo_access_token: str = ""
+
 
 settings = Settings()  # type: ignore[call-arg]

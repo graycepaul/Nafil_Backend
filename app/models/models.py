@@ -25,7 +25,9 @@ from app.core.db import Base
 class Estate(Base):
     __tablename__ = "estates"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     name: Mapped[str] = mapped_column(Text, nullable=False)
     address: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -50,12 +52,32 @@ class Profile(Base):
     estate: Mapped[Estate | None] = relationship(back_populates="profiles")
 
 
+class PushToken(Base):
+    __tablename__ = "push_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("profiles.id")
+    )
+    token: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    platform: Mapped[str | None] = mapped_column(String)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class VisitorPass(Base):
     __tablename__ = "visitor_passes"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    estate_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("estates.id"))
-    resident_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id"))
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    estate_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("estates.id")
+    )
+    resident_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("profiles.id")
+    )
     visitor_name: Mapped[str] = mapped_column(Text, nullable=False)
     visitor_phone: Mapped[str | None] = mapped_column(Text)
     vehicle_plate: Mapped[str | None] = mapped_column(Text)
@@ -69,12 +91,18 @@ class VisitorPass(Base):
 class VisitorLog(Base):
     __tablename__ = "visitor_logs"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    estate_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("estates.id"))
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    estate_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("estates.id")
+    )
     pass_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("visitor_passes.id")
     )
-    security_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id"))
+    security_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("profiles.id")
+    )
     visitor_name: Mapped[str] = mapped_column(Text, nullable=False)
     vehicle_plate: Mapped[str | None] = mapped_column(Text)
     method: Mapped[str] = mapped_column(String, nullable=False)
@@ -86,9 +114,15 @@ class VisitorLog(Base):
 class Issue(Base):
     __tablename__ = "issues"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    estate_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("estates.id"))
-    resident_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id"))
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    estate_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("estates.id")
+    )
+    resident_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("profiles.id")
+    )
     category: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     photo_urls: Mapped[list[str]] = mapped_column(ARRAY(Text))
@@ -100,9 +134,15 @@ class Issue(Base):
 class Announcement(Base):
     __tablename__ = "announcements"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    estate_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("estates.id"))
-    author_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id"))
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    estate_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("estates.id")
+    )
+    author_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("profiles.id")
+    )
     title: Mapped[str] = mapped_column(Text, nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     severity: Mapped[str] = mapped_column(String, nullable=False)

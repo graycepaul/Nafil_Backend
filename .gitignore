@@ -2,10 +2,34 @@
 .venv/
 __pycache__/
 *.pyc
+*.egg-info/
+build/
+dist/
 
-# local env files
+# local env files — everything except the committed example
 .env
-.env*.local
+.env*
+!.env.example
+
+# secrets / credentials
+*.pem
+*.key
+*.p12
+*.crt
+credentials.json
+*serviceAccountKey*.json
+*firebase-adminsdk*.json
+
+# supabase CLI local state
+supabase/.branches/
+supabase/.temp/
+
+# caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
 # macOS
 .DS_Store

@@ -29,7 +29,7 @@ def build_visitor_report(
         rightMargin=18 * mm,
         topMargin=18 * mm,
         bottomMargin=18 * mm,
-        title=f"Visitor Report — {estate_name}",
+        title=f"Visitor Report: {estate_name}",
     )
     styles = getSampleStyleSheet()
     story = [
@@ -46,10 +46,12 @@ def build_visitor_report(
         rows.append(
             [
                 entry.visitor_name,
-                entry.vehicle_plate or "—",
+                entry.vehicle_plate or "N/A",
                 entry.method,
                 f"{entry.checked_in_at:%d/%m %H:%M}",
-                f"{entry.checked_out_at:%d/%m %H:%M}" if entry.checked_out_at else "on-site",
+                f"{entry.checked_out_at:%d/%m %H:%M}"
+                if entry.checked_out_at
+                else "on-site",
             ]
         )
 
@@ -63,7 +65,12 @@ def build_visitor_report(
                 ("FONTSIZE", (0, 0), (-1, -1), 9),
                 ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#DEE1E6")),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F7F8FA")]),
+                (
+                    "ROWBACKGROUNDS",
+                    (0, 1),
+                    (-1, -1),
+                    [colors.white, colors.HexColor("#F7F8FA")],
+                ),
                 ("PADDING", (0, 0), (-1, -1), 6),
             ]
         )

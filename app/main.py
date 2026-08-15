@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import health, reports
+from app.routers import alerts, health, reports
 from app.services.scheduler import register_jobs, scheduler
 
 
@@ -34,3 +34,4 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(reports.router)
+app.include_router(alerts.router)

@@ -22,7 +22,10 @@ _jwks_cache: dict[str, Any] = {"keys": [], "fetched_at": 0.0}
 class CurrentUser:
     id: str
     email: str | None
-    role: str | None  # profiles.role — looked up from the DB, never trusted from the token
+    role: (
+        str | None
+    )  # profiles.role — looked up from the DB, never trusted from the token
+    estate_id: str | None
 
 
 def _fetch_jwks() -> list[dict]:
@@ -73,7 +76,9 @@ def decode_supabase_jwt(token: str) -> dict:
             )
 
         if not settings.supabase_jwt_secret:
-            raise JWTError("Token has no kid (legacy HS256 format) but SUPABASE_JWT_SECRET is unset")
+            raise JWTError(
+                "Token has no kid (legacy HS256 format) but SUPABASE_JWT_SECRET is unset"
+            )
         return jwt.decode(
             token,
             settings.supabase_jwt_secret,
@@ -106,6 +111,7 @@ def get_current_user(
         id=user_id,
         email=payload.get("email"),
         role=profile.role if profile else None,
+        estate_id=str(profile.estate_id) if profile and profile.estate_id else None,
     )
 
 
