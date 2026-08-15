@@ -4,3 +4,7 @@
 # FastAPI is designed to be used, not a bug. Ignoring it here instead of
 # rewriting every route to the Annotated[...] form.
 ignore = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

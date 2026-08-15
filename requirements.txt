@@ -19,3 +19,4 @@ tzdata>=2024.1
 # dev
 ruff>=0.6
 pre-commit>=3.8
+pytest>=8.0
