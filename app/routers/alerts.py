@@ -46,4 +46,6 @@ def broadcast(
         data={"category": request.category, "kind": "emergency_alert"},
     )
 
-    return BroadcastResponse(recipients=len(tokens), tickets_sent=tickets_sent, errors=errors)
+    return BroadcastResponse(
+        recipients=len(tokens), tickets_sent=tickets_sent, errors=errors
+    )

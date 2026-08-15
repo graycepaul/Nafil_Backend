@@ -31,7 +31,9 @@ def visitor_report(
 
     estate = db.get(Estate, estate_id)
     if estate is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Estate not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Estate not found"
+        )
 
     start_dt = datetime.combine(start_date, time.min, tzinfo=timezone.utc)
     end_dt = datetime.combine(end_date, time.max, tzinfo=timezone.utc)
