@@ -117,4 +117,6 @@ insert into announcements (estate_id, author_id, title, body, severity, created_
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000004','Service charge due 5th August','Kindly settle Q3 service charge before the 5th to avoid late fees.','info', now() - interval '3 days'),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000004','Estate AGM — Saturday 10am','Annual general meeting holds at the clubhouse. All owners are encouraged to attend.','info', now() - interval '1 day'),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000003','Water supply interruption','Mains repair on Block B today between 2pm and 6pm. Please store water.','emergency', now() - interval '4 hours'),
+  ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000004','New visitor gate hours','From next week, the pedestrian gate on Close 3 opens at 6am instead of 6:30am.','info', now() - interval '6 days'),
+  ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000003','CCTV maintenance this weekend','Cameras along the perimeter fence will be offline for servicing on Saturday morning.','info', now() - interval '10 hours'),
   ('22222222-2222-2222-2222-222222222222','a0000000-0000-4000-8000-000000000005','Heights notice','Visible only to Nafil Heights residents.','info', now());
