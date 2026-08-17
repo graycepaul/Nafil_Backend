@@ -15,7 +15,7 @@ def delete_account(user: CurrentUser = Depends(get_current_user)) -> None:
     goes through the Admin API with the service role key instead. Every
     dependent row (profile, visitor passes, issues, household members,
     notifications, ...) cascades away via the same ON DELETE CASCADE chain
-    already relied on for manual account cleanup — see supabase/seed.sql.
+    already relied on for manual account cleanup, see supabase/seed.sql.
     """
     resp = httpx.delete(
         f"{settings.supabase_url}/auth/v1/admin/users/{user.id}",
