@@ -14,6 +14,10 @@ class BroadcastRequest(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     body: str = Field(min_length=1, max_length=500)
     category: str | None = None
+    # super_admin only — lets them target an estate other than their own home
+    # one. Ignored for admin/security, who can only ever broadcast to their
+    # own estate regardless of what's sent here.
+    estate_id: str | None = None
 
 
 class BroadcastResponse(BaseModel):

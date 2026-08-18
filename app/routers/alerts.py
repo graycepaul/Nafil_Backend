@@ -19,12 +19,16 @@ def broadcast(
 ) -> BroadcastResponse:
     """
     Push an emergency alert to every resident device registered in the
-    caller's own estate. The in-app announcement row is written by the
-    client directly (via Supabase, same as any other announcement) — this
-    endpoint only does the side effect Supabase/RLS can't: reaching a
-    resident's phone even if they never open the app.
+    target estate. The in-app announcement row is written by the client
+    directly (via Supabase, same as any other announcement) — this endpoint
+    only does the side effect Supabase/RLS can't: reaching a resident's
+    phone even if they never open the app.
     """
-    if not user.estate_id:
+    target_estate_id = user.estate_id
+    if user.role == "super_admin" and request.estate_id:
+        target_estate_id = request.estate_id
+
+    if not target_estate_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Your account isn't assigned to an estate",
@@ -34,7 +38,7 @@ def broadcast(
         db.scalars(
             select(PushToken.token)
             .join(Profile, Profile.id == PushToken.profile_id)
-            .where(Profile.estate_id == user.estate_id)
+            .where(Profile.estate_id == target_estate_id)
         )
     )
 
