@@ -1,11 +1,13 @@
 -- ══════════════════════════════════════════════════════════════════════════
 -- Nafil Estates — test seed data
 --
--- Two estates, five accounts (one per role, plus a Nafil Heights resident
--- who isn't part of the review credential set), and sample passes/issues/
--- announcements so no screen opens empty. The second estate exists so
--- super_admin's cross-estate visibility (vs. admin's single-estate scope)
--- is actually visible to a reviewer, not just a difference on paper.
+-- Two estates, ten accounts (the original five review-credential accounts,
+-- one per role, plus five more spread across both estates/roles so there's
+-- enough volume to exercise search-and-filter-by-estate, not just prove the
+-- UI renders), and sample passes/issues/announcements so no screen opens
+-- empty. The second estate exists so super_admin's cross-estate visibility
+-- (vs. admin's single-estate scope) is actually visible to a reviewer, not
+-- just a difference on paper.
 --
 -- Password for every account: NafilTest123!
 --
@@ -64,7 +66,26 @@ insert into auth.users (
   -- cross-estate view has a second estate's data to actually show.
   ('00000000-0000-0000-0000-000000000000','b0000000-0000-4000-8000-000000000001','authenticated','authenticated',
    'heights@nafil.test', crypt('NafilTest123!', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}','{"full_name":"Fatima Bello"}', now(), now(), '','','','');
+   '{"provider":"email","providers":["email"]}','{"full_name":"Fatima Bello"}', now(), now(), '','','',''),
+
+  -- More accounts across both estates — enough volume in each role/estate
+  -- combination to actually exercise the admin/super_admin search-and-
+  -- filter-by-estate feature, not just prove the UI renders.
+  ('00000000-0000-0000-0000-000000000000','b0000000-0000-4000-8000-000000000002','authenticated','authenticated',
+   'ngozi.heights@nafil.test', crypt('NafilTest123!', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}','{"full_name":"Ngozi Chukwu"}', now(), now(), '','','',''),
+  ('00000000-0000-0000-0000-000000000000','b0000000-0000-4000-8000-000000000003','authenticated','authenticated',
+   'grace.heights@nafil.test', crypt('NafilTest123!', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}','{"full_name":"Grace Okonkwo"}', now(), now(), '','','',''),
+  ('00000000-0000-0000-0000-000000000000','b0000000-0000-4000-8000-000000000004','authenticated','authenticated',
+   'yusuf.heights@nafil.test', crypt('NafilTest123!', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}','{"full_name":"Yusuf Bala"}', now(), now(), '','','',''),
+  ('00000000-0000-0000-0000-000000000000','c0000000-0000-4000-8000-000000000001','authenticated','authenticated',
+   'tunde.gardens@nafil.test', crypt('NafilTest123!', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}','{"full_name":"Tunde Bakare"}', now(), now(), '','','',''),
+  ('00000000-0000-0000-0000-000000000000','c0000000-0000-4000-8000-000000000002','authenticated','authenticated',
+   'zainab.gardens@nafil.test', crypt('NafilTest123!', gen_salt('bf')), now(),
+   '{"provider":"email","providers":["email"]}','{"full_name":"Zainab Sule"}', now(), now(), '','','','');
 
 -- GoTrue expects one identity row per email user
 insert into auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
@@ -84,6 +105,11 @@ update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='secu
 update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='admin',    phone='+2348064445555', approved=true, avatar_url='https://i.pravatar.cc/300?img=32' where id='a0000000-0000-4000-8000-000000000004';
 update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='super_admin', phone='+2348077778888', approved=true, avatar_url='https://i.pravatar.cc/300?img=68' where id='a0000000-0000-4000-8000-000000000005';
 update profiles set estate_id='22222222-2222-2222-2222-222222222222', role='resident', unit_no='H21', phone='+2348012223333', approved=true, avatar_url='https://i.pravatar.cc/300?img=44' where id='b0000000-0000-4000-8000-000000000001';
+update profiles set estate_id='22222222-2222-2222-2222-222222222222', role='resident', unit_no='H09', phone='+2348013334444', approved=true, avatar_url='https://i.pravatar.cc/300?img=45' where id='b0000000-0000-4000-8000-000000000002';
+update profiles set estate_id='22222222-2222-2222-2222-222222222222', role='admin',    phone='+2348014445555', approved=true, avatar_url='https://i.pravatar.cc/300?img=33' where id='b0000000-0000-4000-8000-000000000003';
+update profiles set estate_id='22222222-2222-2222-2222-222222222222', role='security', phone='+2348015556666', approved=true, avatar_url='https://i.pravatar.cc/300?img=54' where id='b0000000-0000-4000-8000-000000000004';
+update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='resident', unit_no='C08', phone='+2348026667777', approved=true, avatar_url='https://i.pravatar.cc/300?img=48' where id='c0000000-0000-4000-8000-000000000001';
+update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='resident', unit_no='A15', phone='+2348027778888', approved=true, avatar_url='https://i.pravatar.cc/300?img=49' where id='c0000000-0000-4000-8000-000000000002';
 
 -- ── Visitor passes (one per status) ───────────────────────────────────────
 insert into visitor_passes (estate_id, resident_id, visitor_name, visitor_phone, vehicle_plate, code, status, valid_until) values
@@ -108,15 +134,17 @@ insert into issues (estate_id, resident_id, category, description, status, creat
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000001','Plumbing','Persistent leak under the kitchen sink in B12.','open', now() - interval '2 days', null),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000001','Electrical','Streetlight outside B12 has been out for a week.','in_progress', now() - interval '5 days', null),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000001','Security','Back gate latch does not close properly.','resolved', now() - interval '14 days', now() - interval '10 days'),
-  ('22222222-2222-2222-2222-222222222222','b0000000-0000-4000-8000-000000000001','Waste','Refuse collection missed this week.','open', now() - interval '1 day', null);
+  ('22222222-2222-2222-2222-222222222222','b0000000-0000-4000-8000-000000000001','Waste','Refuse collection missed this week.','open', now() - interval '1 day', null),
+  ('22222222-2222-2222-2222-222222222222','b0000000-0000-4000-8000-000000000002','Noise','Construction noise starting before 7am on weekends.','in_progress', now() - interval '3 days', null),
+  ('11111111-1111-1111-1111-111111111111','c0000000-0000-4000-8000-000000000001','Parking','Visitor keeps parking across the driveway at C08.','open', now() - interval '12 hours', null);
 
--- ── Announcements (incl. one emergency; the Heights one is authored by
---    super_admin, since only admin/security/super_admin can write them and
---    there's no admin/security account scoped to that estate) ─────────────
+-- ── Announcements (incl. two emergencies, one per estate) ─────────────────
 insert into announcements (estate_id, author_id, title, body, severity, created_at) values
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000004','Service charge due 5th August','Kindly settle Q3 service charge before the 5th to avoid late fees.','info', now() - interval '3 days'),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000004','Estate AGM — Saturday 10am','Annual general meeting holds at the clubhouse. All owners are encouraged to attend.','info', now() - interval '1 day'),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000003','Water supply interruption','Mains repair on Block B today between 2pm and 6pm. Please store water.','emergency', now() - interval '4 hours'),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000004','New visitor gate hours','From next week, the pedestrian gate on Close 3 opens at 6am instead of 6:30am.','info', now() - interval '6 days'),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000003','CCTV maintenance this weekend','Cameras along the perimeter fence will be offline for servicing on Saturday morning.','info', now() - interval '10 hours'),
-  ('22222222-2222-2222-2222-222222222222','a0000000-0000-4000-8000-000000000005','Heights notice','Visible only to Nafil Heights residents.','info', now());
+  ('22222222-2222-2222-2222-222222222222','a0000000-0000-4000-8000-000000000005','Heights notice','Visible only to Nafil Heights residents.','info', now()),
+  ('22222222-2222-2222-2222-222222222222','b0000000-0000-4000-8000-000000000003','Generator maintenance Thursday','Backup generator servicing 9am–1pm Thursday. Expect brief power blips during switchover tests.','info', now() - interval '2 days'),
+  ('22222222-2222-2222-2222-222222222222','b0000000-0000-4000-8000-000000000004','Perimeter fence breach attempt','Attempted break-in at the north fence overnight. Extra patrols in place — report anything suspicious.','emergency', now() - interval '6 hours');
