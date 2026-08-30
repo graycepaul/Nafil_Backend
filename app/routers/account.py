@@ -16,6 +16,17 @@ def delete_account(user: CurrentUser = Depends(get_current_user)) -> None:
     dependent row (profile, visitor passes, issues, household members,
     notifications, ...) cascades away via the same ON DELETE CASCADE chain
     already relied on for manual account cleanup, see supabase/seed.sql.
+
+    Idempotent: get_current_user only checks the JWT's signature and expiry,
+    never whether the account still exists, so a token issued before this ran
+    stays "valid" here for its full lifetime even after deletion. If a first
+    request already deleted the account but its response never reached the
+    client (dropped connection, timeout), a retry arrives with that same
+    still-valid token and Supabase's Admin API correctly returns 404 for the
+    now-missing user — treated as success here, since the caller's actual
+    goal ("this account should not exist") is already true. Without this, a
+    retry after an ambiguous first attempt surfaces a confusing "failed, try
+    again" error for an account that was, in fact, already deleted.
     """
     resp = httpx.delete(
         f"{settings.supabase_url}/auth/v1/admin/users/{user.id}",
@@ -25,7 +36,7 @@ def delete_account(user: CurrentUser = Depends(get_current_user)) -> None:
         },
         timeout=10,
     )
-    if resp.status_code not in (200, 204):
+    if resp.status_code not in (200, 204, 404):
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Failed to delete account. Please try again or contact support.",

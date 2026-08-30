@@ -33,3 +33,16 @@ def test_delete_account_upstream_failure(client):
         response = client.delete("/account")
 
     assert response.status_code == 502
+
+
+def test_delete_account_already_deleted_is_success(client):
+    """A retry after an earlier request whose response never reached the
+    client (e.g. dropped connection) hits an already-deleted user — Supabase
+    returns 404, which must resolve as success rather than a confusing
+    "failed, try again" error for an account that's already gone."""
+    override_user()
+    with patch("app.routers.account.httpx.delete") as mock_delete:
+        mock_delete.return_value.status_code = 404
+        response = client.delete("/account")
+
+    assert response.status_code == 204
