@@ -48,6 +48,10 @@ def broadcast(
         title=f"🚨 {title}",
         body=request.body,
         data={"category": request.category, "kind": "emergency_alert"},
+        sound="emergency_alert.wav",
+        priority="high",
+        channel_id="emergency",
+        interruption_level="time-sensitive",
     )
 
     return BroadcastResponse(

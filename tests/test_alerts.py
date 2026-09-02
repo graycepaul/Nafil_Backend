@@ -45,3 +45,9 @@ def test_broadcast_sends_to_estate_tokens(client, mock_db):
     assert response.json() == {"recipients": 2, "tickets_sent": 2, "errors": []}
     mock_send.assert_called_once()
     assert mock_send.call_args.kwargs["tokens"] == ["token-a", "token-b"]
+    # Regression guard: Expo's API validates this against APNs' own enum,
+    # which is hyphenated ("time-sensitive"). The camelCase("timeSensitive")
+    # this code shipped with made Expo reject the *entire* batch with a 400
+    # — nobody in it got pushed, silently, since a 400 here still gets
+    # caught and turned into a normal `errors` entry rather than raising.
+    assert mock_send.call_args.kwargs["interruption_level"] == "time-sensitive"

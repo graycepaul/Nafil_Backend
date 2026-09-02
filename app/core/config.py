@@ -28,5 +28,14 @@ class Settings(BaseSettings):
     # notifications through your account.
     expo_access_token: str = ""
 
+    # Shared secret a Postgres trigger sends back to this service (as the
+    # X-Internal-Secret header) when it wants a push sent — see
+    # supabase/migrations/0028_generic_push_notifications.sql. Not a user's
+    # credential, so it isn't verified against Supabase's JWKS like normal
+    # requests; this is the only thing stopping /push/notify-user from being
+    # a public "push anything to anyone" endpoint. Must match the value
+    # stored in that migration's `vault.create_secret` call exactly.
+    internal_push_secret: str = ""
+
 
 settings = Settings()  # type: ignore[call-arg]

@@ -9,6 +9,7 @@ import pytest
 os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
 os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "test-service-role-key")
 os.environ.setdefault("DATABASE_URL", "postgresql://test:test@localhost/test")
+os.environ.setdefault("INTERNAL_PUSH_SECRET", "test-internal-push-secret")
 
 from fastapi.testclient import TestClient
 
