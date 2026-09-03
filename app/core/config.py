@@ -19,7 +19,16 @@ class Settings(BaseSettings):
     database_url: str
 
     environment: str = "development"
-    cors_origins: list[str] = ["*"]
+    # A native app (iOS/Android) isn't subject to CORS at all — only the web
+    # build of Nafil Mobile, running in a browser, needs its origin allowed
+    # here. Defaults to the real production/dev origins rather than "*" so a
+    # deployment that never sets CORS_ORIGINS explicitly doesn't end up
+    # wide open; override via the env var (JSON array) for anything else,
+    # e.g. a Vercel preview URL.
+    cors_origins: list[str] = [
+        "https://app.nafilestates.com",
+        "http://localhost:8081",
+    ]
 
     # Optional: an Expo access token scopes/authenticates push-send requests
     # to this project specifically. Not required to send push at all — Expo's

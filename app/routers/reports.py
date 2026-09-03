@@ -16,18 +16,35 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 
 @router.get("/visitors.pdf")
 def visitor_report(
-    estate_id: UUID,
     start_date: date,
     end_date: date,
     db: Session = Depends(get_db),
     user: CurrentUser = Depends(require_roles("admin", "super_admin")),
 ) -> Response:
-    """Visitor log for an estate over a date range, as a PDF."""
+    """
+    Visitor log for the caller's own estate over a date range, as a PDF.
+
+    estate_id used to be a caller-supplied query param, checked against
+    nothing — any admin/super_admin could read any other estate's visitor
+    log just by changing it. There's currently no client calling this
+    endpoint at all (no UI wired up yet, unlike /alerts/broadcast, which
+    has the same "super_admin may target another estate" shape done
+    correctly), so there's no compatibility reason to keep accepting a
+    caller-supplied estate_id here: it's simplest, and safest, to always
+    scope to the caller's own.
+    """
     if start_date > end_date:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="start_date must be on or before end_date",
         )
+
+    if not user.estate_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Your account isn't assigned to an estate",
+        )
+    estate_id = UUID(user.estate_id)
 
     estate = db.get(Estate, estate_id)
     if estate is None:

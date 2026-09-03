@@ -12,7 +12,10 @@ def override_user():
 
 def test_delete_account_requires_auth(client):
     response = client.delete("/account")
-    assert response.status_code == 403
+    # fastapi's HTTPBearer raises 401 for a missing Authorization header
+    # (403 in older fastapi versions was a long-standing quirk; 401 is the
+    # HTTP-spec-correct code for "not authenticated at all").
+    assert response.status_code == 401
 
 
 def test_delete_account_success(client):

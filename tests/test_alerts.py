@@ -18,7 +18,10 @@ def override_user(role: str, estate_id: str | None = "estate-1"):
 
 def test_broadcast_requires_auth(client):
     response = client.post("/alerts/broadcast", json=BROADCAST_BODY)
-    assert response.status_code == 403
+    # fastapi's HTTPBearer raises 401 for a missing Authorization header
+    # (403 in older fastapi versions was a long-standing quirk; 401 is the
+    # HTTP-spec-correct code for "not authenticated at all").
+    assert response.status_code == 401
 
 
 def test_broadcast_rejects_disallowed_role(client):
