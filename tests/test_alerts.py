@@ -18,7 +18,10 @@ def override_user(role: str, estate_id: str | None = "estate-1"):
 
 def test_broadcast_requires_auth(client):
     response = client.post("/alerts/broadcast", json=BROADCAST_BODY)
-    assert response.status_code == 403
+    # fastapi's HTTPBearer raises 401 for a missing Authorization header
+    # (403 in older fastapi versions was a long-standing quirk; 401 is the
+    # HTTP-spec-correct code for "not authenticated at all").
+    assert response.status_code == 401
 
 
 def test_broadcast_rejects_disallowed_role(client):
@@ -45,3 +48,9 @@ def test_broadcast_sends_to_estate_tokens(client, mock_db):
     assert response.json() == {"recipients": 2, "tickets_sent": 2, "errors": []}
     mock_send.assert_called_once()
     assert mock_send.call_args.kwargs["tokens"] == ["token-a", "token-b"]
+    # Regression guard: Expo's API validates this against APNs' own enum,
+    # which is hyphenated ("time-sensitive"). The camelCase("timeSensitive")
+    # this code shipped with made Expo reject the *entire* batch with a 400
+    # — nobody in it got pushed, silently, since a 400 here still gets
+    # caught and turned into a normal `errors` entry rather than raising.
+    assert mock_send.call_args.kwargs["interruption_level"] == "time-sensitive"

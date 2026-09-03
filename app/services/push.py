@@ -27,6 +27,11 @@ def send_push_notifications(
     title: str,
     body: str,
     data: dict | None = None,
+    *,
+    sound: str = "default",
+    priority: str = "default",
+    channel_id: str = "default",
+    interruption_level: str | None = None,
 ) -> tuple[int, list[str]]:
     """
     Returns (tickets_sent, errors). A ticket being accepted doesn't guarantee
@@ -34,6 +39,11 @@ def send_push_notifications(
     but it does confirm Expo's push service accepted the token and queued the
     message, which is enough to tell the sender "this went out" versus
     "this token/request was rejected outright".
+
+    Defaults suit a routine notification (a resolved issue, a used visitor
+    pass) — normal sound/priority, the app's default Android channel, no
+    Focus/DND-bypassing interruption level. `alerts.py`'s emergency broadcast
+    overrides all four; nothing else should need to.
     """
     if not tokens:
         return 0, []
@@ -56,19 +66,29 @@ def send_push_notifications(
                     "title": title,
                     "body": body,
                     "data": data or {},
-                    # Android's sound is actually set by the "emergency" channel
-                    # itself (channels own their sound once created; this field
-                    # is ignored there) — this is for iOS, which reads it per
-                    # message. Must match a sound bundled via app.json's
-                    # expo-notifications plugin config.
-                    "sound": "emergency_alert.wav",
-                    "priority": "high",
-                    "channelId": "emergency",
-                    # Best available without Apple's Critical Alerts entitlement
-                    # (which only Apple can grant, not this backend): lets the
-                    # alert break through the recipient's Focus/DND filtering,
-                    # but still respects the physical silent switch.
-                    "interruptionLevel": "timeSensitive",
+                    # Android's sound is actually set by the channel itself
+                    # (channels own their sound once created; this field is
+                    # ignored there) — this is for iOS, which reads it per
+                    # message. A non-default value must match a sound bundled
+                    # via app.json's expo-notifications plugin config.
+                    "sound": sound,
+                    "priority": priority,
+                    "channelId": channel_id,
+                    # Expo's API validates this against APNs' own enum,
+                    # which is hyphenated ("time-sensitive") — not the
+                    # camelCase used everywhere else in this payload.
+                    # Getting this wrong doesn't just drop the
+                    # interruption level: Expo rejects the entire batch
+                    # with a 400, so nobody in it gets pushed. Omitted
+                    # entirely (not even at Expo's own "active" default)
+                    # for anything that isn't explicitly overriding it —
+                    # one less way for a typo here to take out a whole
+                    # unrelated batch.
+                    **(
+                        {"interruptionLevel": interruption_level}
+                        if interruption_level
+                        else {}
+                    ),
                 }
                 for token in batch
             ]

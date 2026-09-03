@@ -12,7 +12,10 @@ def override_user():
 
 def test_delete_account_requires_auth(client):
     response = client.delete("/account")
-    assert response.status_code == 403
+    # fastapi's HTTPBearer raises 401 for a missing Authorization header
+    # (403 in older fastapi versions was a long-standing quirk; 401 is the
+    # HTTP-spec-correct code for "not authenticated at all").
+    assert response.status_code == 401
 
 
 def test_delete_account_success(client):
@@ -33,3 +36,16 @@ def test_delete_account_upstream_failure(client):
         response = client.delete("/account")
 
     assert response.status_code == 502
+
+
+def test_delete_account_already_deleted_is_success(client):
+    """A retry after an earlier request whose response never reached the
+    client (e.g. dropped connection) hits an already-deleted user — Supabase
+    returns 404, which must resolve as success rather than a confusing
+    "failed, try again" error for an account that's already gone."""
+    override_user()
+    with patch("app.routers.account.httpx.delete") as mock_delete:
+        mock_delete.return_value.status_code = 404
+        response = client.delete("/account")
+
+    assert response.status_code == 204

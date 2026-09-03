@@ -19,7 +19,16 @@ class Settings(BaseSettings):
     database_url: str
 
     environment: str = "development"
-    cors_origins: list[str] = ["*"]
+    # A native app (iOS/Android) isn't subject to CORS at all — only the web
+    # build of Nafil Mobile, running in a browser, needs its origin allowed
+    # here. Defaults to the real production/dev origins rather than "*" so a
+    # deployment that never sets CORS_ORIGINS explicitly doesn't end up
+    # wide open; override via the env var (JSON array) for anything else,
+    # e.g. a Vercel preview URL.
+    cors_origins: list[str] = [
+        "https://app.nafilestates.com",
+        "http://localhost:8081",
+    ]
 
     # Optional: an Expo access token scopes/authenticates push-send requests
     # to this project specifically. Not required to send push at all — Expo's
@@ -27,6 +36,15 @@ class Settings(BaseSettings):
     # project, so an unrelated app's leaked push tokens can't be used to spam
     # notifications through your account.
     expo_access_token: str = ""
+
+    # Shared secret a Postgres trigger sends back to this service (as the
+    # X-Internal-Secret header) when it wants a push sent — see
+    # supabase/migrations/0028_generic_push_notifications.sql. Not a user's
+    # credential, so it isn't verified against Supabase's JWKS like normal
+    # requests; this is the only thing stopping /push/notify-user from being
+    # a public "push anything to anyone" endpoint. Must match the value
+    # stored in that migration's `vault.create_secret` call exactly.
+    internal_push_secret: str = ""
 
 
 settings = Settings()  # type: ignore[call-arg]
