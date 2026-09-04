@@ -10,7 +10,7 @@ its own keys, and its own domain, until you deliberately cut over.
 Hostinger KVM 2 (2 vCPU / 8 GB RAM) minimum — the self-hosted Supabase stack
 runs Postgres, GoTrue (auth), PostgREST, Realtime, Storage, Kong, and Studio
 as separate containers, and is noticeably heavier than plain Postgres alone.
-Pick Ubuntu 24.04 LTS as the OS. Point a subdomain (e.g. `api.nafilestates.com`)
+Pick the latest Ubuntu LTS as the OS. Point a subdomain (e.g. `api.nafilestates.com`)
 at the VPS's IP once you have it — you'll need it for TLS.
 
 ## 1. Harden the box
@@ -20,9 +20,27 @@ ssh root@your-vps-ip
 adduser deploy && usermod -aG sudo deploy
 ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw enable
 ```
-Disable root SSH login and password auth in `/etc/ssh/sshd_config` once your
-`deploy` user's SSH key works — this is the single biggest thing standing
-between the VPS and random internet scanners.
+
+Copy your local public key up (`ssh-copy-id deploy@your-vps-ip` from your own
+machine, not the server) and confirm `ssh deploy@your-vps-ip` logs in with no
+password prompt before touching anything else.
+
+Then disable root login and password auth. Cloud images often ship more than
+one `sshd_config.d/*.conf` drop-in with conflicting values (check with
+`sudo grep -rn "PermitRootLogin\|PasswordAuthentication" /etc/ssh/sshd_config /etc/ssh/sshd_config.d/`),
+and since `Include` runs before the rest of the file, whichever drop-in sorts
+first wins. Add one that's guaranteed to sort first and win outright:
+
+```bash
+sudo tee /etc/ssh/sshd_config.d/10-hardening.conf > /dev/null <<'EOF'
+PermitRootLogin no
+PasswordAuthentication no
+EOF
+sudo sshd -t && sudo systemctl restart ssh
+```
+
+Verify from a **new** terminal tab before closing the old one: `ssh deploy@your-vps-ip`
+should still work with your key, and `ssh root@your-vps-ip` should be refused outright.
 
 ## 2. Install Docker
 
@@ -44,29 +62,54 @@ cd supabase/docker
 cp .env.example .env
 ```
 
-Edit `.env`: set `POSTGRES_PASSWORD`, generate `JWT_SECRET`
-(`openssl rand -base64 32`), and generate `ANON_KEY`/`SERVICE_ROLE_KEY` from
-that secret using the script Supabase's README links to. Set `API_EXTERNAL_URL`
-and `SITE_URL` to `https://api.nafilestates.com`.
+Fill in the generated secrets and URLs the scripted way, don't hand-edit them:
 
 ```bash
-docker network create nafil_net
-docker compose up -d
+sh utils/generate-keys.sh        # POSTGRES_PASSWORD, JWT_SECRET, legacy ANON/SERVICE_ROLE keys
+sh utils/add-new-auth-keys.sh    # asymmetric ES256 keys — the same signing-key system prod already uses
 ```
 
-Confirm Kong is up: `curl http://localhost:8000/auth/v1/health`.
+Then set the URL/tenant values by hand:
+
+```bash
+sed -i \
+  -e 's#^SUPABASE_PUBLIC_URL=.*#SUPABASE_PUBLIC_URL=https://api.nafilestates.com#' \
+  -e 's#^API_EXTERNAL_URL=.*#API_EXTERNAL_URL=https://api.nafilestates.com/auth/v1#' \
+  -e 's#^SITE_URL=.*#SITE_URL=https://app.nafilestates.com#' \
+  -e 's#^POOLER_TENANT_ID=.*#POOLER_TENANT_ID=nafil-estates#' \
+  .env
+```
+
+Before starting the stack, bind the Postgres pooler (`5432`/`6543`) and the
+API gateway (`8000`) to `127.0.0.1` in `docker-compose.yml`, not `0.0.0.0` —
+Docker inserts its own iptables rules and can expose published container
+ports straight to the internet regardless of what UFW says. Check with
+`grep -n "5432\|6543\|8000" docker-compose.yml`, prefix each `ports:` entry
+with `127.0.0.1:`, then verify from **outside** the VPS (`nc -zv your-vps-ip 5432`
+should time out, not succeed) before going further.
+
+```bash
+docker compose pull
+docker compose up -d
+docker compose ps   # everything should show "healthy"
+```
 
 ## 4. Load your schema
 
 Run every migration in [`../../supabase/migrations`](../../supabase/migrations)
 against the new database, in order, exactly as they were applied to the
-production project:
+production project, via the running Postgres container:
 
 ```bash
-for f in /path/to/Nafil\ Backend/supabase/migrations/*.sql; do
-  psql "postgresql://postgres:$POSTGRES_PASSWORD@localhost:5432/postgres" -f "$f"
+for f in ~/migrations/*.sql; do
+  echo "Applying: $f"
+  docker exec -i supabase-db psql -U postgres -d postgres < "$f"
 done
 ```
+
+(Copy the migrations folder up first with `scp -r "path/to/Nafil Backend/supabase/migrations" deploy@your-vps-ip:~/migrations`.)
+Watch for `ERROR` lines partway through — that means a later migration
+depends on something this run skipped or failed.
 
 This is a schema-only copy — no resident data. Do not point this instance at
 real users until you've decided to cut over.
@@ -74,14 +117,16 @@ real users until you've decided to cut over.
 ## 5. Deploy the backend
 
 ```bash
-cd /path/to/Nafil\ Backend/deploy/self-hosted
+git clone https://github.com/graycepaul/Nafil_Backend.git ~/nafil-backend
+cd ~/nafil-backend/deploy/self-hosted
 cp .env.backend.example .env.backend   # fill in the real values
 docker compose -f docker-compose.backend.yml up -d --build
 ```
 
-The api container joins `nafil_net`, the same network the Supabase stack is
-on, so `DATABASE_URL=postgresql://postgres:...@db:5432/postgres` resolves
-by container name.
+The api container joins `supabase_default`, the network the Supabase stack's
+`docker compose up` created automatically, so `DATABASE_URL=postgresql://postgres:...@db:5432/postgres`
+resolves `db` by container name, straight to Postgres, no pooler needed for
+our own service.
 
 ## 6. Put nginx in front
 
