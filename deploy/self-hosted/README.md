@@ -10,8 +10,10 @@ its own keys, and its own domain, until you deliberately cut over.
 Hostinger KVM 2 (2 vCPU / 8 GB RAM) minimum — the self-hosted Supabase stack
 runs Postgres, GoTrue (auth), PostgREST, Realtime, Storage, Kong, and Studio
 as separate containers, and is noticeably heavier than plain Postgres alone.
-Pick the latest Ubuntu LTS as the OS. Point a subdomain (e.g. `api.nafilestates.com`)
-at the VPS's IP once you have it — you'll need it for TLS.
+Pick the latest Ubuntu LTS as the OS. Point a subdomain, e.g. `vps.nafilestates.com`,
+at the VPS's IP once you have it — you'll need it for TLS. Use a name that
+can't collide with anything live: `api.nafilestates.com` and `app.nafilestates.com`
+already point at production (Render and Vercel respectively) — don't reuse them here.
 
 ## 1. Harden the box
 
@@ -73,8 +75,8 @@ Then set the URL/tenant values by hand:
 
 ```bash
 sed -i \
-  -e 's#^SUPABASE_PUBLIC_URL=.*#SUPABASE_PUBLIC_URL=https://api.nafilestates.com#' \
-  -e 's#^API_EXTERNAL_URL=.*#API_EXTERNAL_URL=https://api.nafilestates.com/auth/v1#' \
+  -e 's#^SUPABASE_PUBLIC_URL=.*#SUPABASE_PUBLIC_URL=https://vps.nafilestates.com#' \
+  -e 's#^API_EXTERNAL_URL=.*#API_EXTERNAL_URL=https://vps.nafilestates.com/auth/v1#' \
   -e 's#^SITE_URL=.*#SITE_URL=https://app.nafilestates.com#' \
   -e 's#^POOLER_TENANT_ID=.*#POOLER_TENANT_ID=nafil-estates#' \
   .env
@@ -134,7 +136,7 @@ Install nginx and certbot on the host, drop [`nginx.conf`](nginx.conf) into
 `/etc/nginx/sites-available/`, symlink it into `sites-enabled`, then:
 
 ```bash
-certbot --nginx -d api.nafilestates.com
+certbot --nginx -d vps.nafilestates.com
 ```
 
 `nginx.conf` splits traffic on this one domain: Supabase's own routes
@@ -147,7 +149,7 @@ same host, matching how the client code already expects to talk to Supabase.
 Before this stack sees any real traffic, per the infrastructure plan:
 
 - **Uptime monitor** — point UptimeRobot (or similar) at
-  `https://api.nafilestates.com/health`.
+  `https://vps.nafilestates.com/health`.
 - **Error tracking** — add a Sentry DSN to `.env.backend` if/when the
   backend is wired for it.
 - **Nightly backups** — cron a `pg_dump` from the `db` container to offsite
@@ -159,7 +161,7 @@ Before this stack sees any real traffic, per the infrastructure plan:
 ## 8. Test end-to-end, still isolated
 
 Build a separate development/staging build of Nafil Mobile pointed at
-`https://api.nafilestates.com` and `SUPABASE_URL=https://api.nafilestates.com`,
+`https://vps.nafilestates.com` and `SUPABASE_URL=https://vps.nafilestates.com`,
 with its own test accounts. Walk through sign-up, login, issue reporting,
 marketplace, wallet — the whole app — against this VPS. Production Supabase
 and Render are untouched through all of this.
