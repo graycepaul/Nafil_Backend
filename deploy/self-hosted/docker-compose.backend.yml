@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/self-hosted/Dockerfile
+    container_name: nafil-api
+    restart: unless-stopped
+    env_file:
+      - .env.backend
+    networks:
+      - nafil_net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    expose:
+      - "8000"
+
+networks:
+  nafil_net:
+    external: true

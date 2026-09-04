@@ -6,10 +6,11 @@ __pycache__/
 build/
 dist/
 
-# local env files — everything except the committed example
+# local env files — everything except the committed examples
 .env
 .env*
 !.env.example
+!.env.backend.example
 
 # secrets / credentials
 *.pem
