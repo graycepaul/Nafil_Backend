@@ -46,5 +46,8 @@ class Settings(BaseSettings):
     # stored in that migration's `vault.create_secret` call exactly.
     internal_push_secret: str = ""
 
+    # Error tracking — leave unset to disable Sentry entirely (e.g. local dev).
+    sentry_dsn: str = ""
+
 
 settings = Settings()  # type: ignore[call-arg]

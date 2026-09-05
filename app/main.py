@@ -1,11 +1,21 @@
 from contextlib import asynccontextmanager
 
+import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.routers import account, alerts, health, push, reports
 from app.services.scheduler import register_jobs, scheduler
+
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.environment,
+        # No performance tracing yet — just capture unhandled errors for now.
+        traces_sample_rate=0.0,
+        send_default_pii=False,
+    )
 
 
 @asynccontextmanager
