@@ -24,7 +24,7 @@ def test_notify_user_sends_to_profiles_tokens(client, mock_db):
     mock_db.scalars.return_value = ["token-a"]
 
     with patch("app.routers.push.send_push_notifications") as mock_send:
-        mock_send.return_value = (1, [])
+        mock_send.return_value = (1, [], [])
         response = client.post(
             "/push/notify-user",
             json=NOTIFY_BODY,

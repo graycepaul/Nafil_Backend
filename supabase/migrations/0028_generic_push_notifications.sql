@@ -45,7 +45,13 @@ begin
   perform net.http_post(
     url := 'https://api.nafilestates.com/push/notify-user',
     headers := jsonb_build_object('Content-Type', 'application/json', 'X-Internal-Secret', v_secret),
-    body := jsonb_build_object('profile_id', new.profile_id, 'title', new.title, 'body', new.body, 'data', new.data)
+    body := jsonb_build_object('profile_id', new.profile_id, 'title', new.title, 'body', new.body, 'data', new.data),
+    -- pg_net's default is 5s. Render's free tier cold-starts after
+    -- inactivity and can take well over that to respond to the first
+    -- request — confirmed directly via net._http_response showing a real
+    -- 5000ms timeout mid-response. 30s covers a cold start; this is a
+    -- stopgap, not a fix for the cold start itself (see the infra plan).
+    timeout_milliseconds := 30000
   );
 
   return new;

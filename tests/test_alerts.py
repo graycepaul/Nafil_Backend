@@ -41,7 +41,7 @@ def test_broadcast_sends_to_estate_tokens(client, mock_db):
     mock_db.scalars.return_value = ["token-a", "token-b"]
 
     with patch("app.routers.alerts.send_push_notifications") as mock_send:
-        mock_send.return_value = (2, [])
+        mock_send.return_value = (2, [], [])
         response = client.post("/alerts/broadcast", json=BROADCAST_BODY)
 
     assert response.status_code == 200

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -40,12 +40,16 @@ def notify_user(
         )
     )
 
-    tickets_sent, errors = send_push_notifications(
+    tickets_sent, errors, dead_tokens = send_push_notifications(
         tokens=tokens,
         title=request.title,
         body=request.body,
         data=request.data,
     )
+
+    if dead_tokens:
+        db.execute(delete(PushToken).where(PushToken.token.in_(dead_tokens)))
+        db.commit()
 
     return NotifyUserResponse(
         recipients=len(tokens), tickets_sent=tickets_sent, errors=errors

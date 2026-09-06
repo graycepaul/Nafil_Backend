@@ -32,13 +32,18 @@ def send_push_notifications(
     priority: str = "default",
     channel_id: str = "default",
     interruption_level: str | None = None,
-) -> tuple[int, list[str]]:
+) -> tuple[int, list[str], list[str]]:
     """
-    Returns (tickets_sent, errors). A ticket being accepted doesn't guarantee
-    delivery — Expo's receipt endpoint would confirm that after the fact —
-    but it does confirm Expo's push service accepted the token and queued the
-    message, which is enough to tell the sender "this went out" versus
-    "this token/request was rejected outright".
+    Returns (tickets_sent, errors, dead_tokens). A ticket being accepted
+    doesn't guarantee delivery — Expo's receipt endpoint would confirm that
+    after the fact — but it does confirm Expo's push service accepted the
+    token and queued the message, which is enough to tell the sender "this
+    went out" versus "this token/request was rejected outright".
+
+    `dead_tokens` are ones Expo reported as `DeviceNotRegistered` — the
+    device uninstalled the app or the token otherwise permanently expired.
+    Expo will keep returning this same error for these tokens forever;
+    callers should delete them from `push_tokens` rather than retry.
 
     Defaults suit a routine notification (a resolved issue, a used visitor
     pass) — normal sound/priority, the app's default Android channel, no
@@ -46,7 +51,7 @@ def send_push_notifications(
     overrides all four; nothing else should need to.
     """
     if not tokens:
-        return 0, []
+        return 0, [], []
 
     headers = {
         "Accept": "application/json",
@@ -57,6 +62,7 @@ def send_push_notifications(
 
     tickets_sent = 0
     errors: list[str] = []
+    dead_tokens: list[str] = []
 
     with httpx.Client(timeout=10) as client:
         for batch in _chunk(tokens, _CHUNK_SIZE):
@@ -100,13 +106,21 @@ def send_push_notifications(
                 errors.append(f"Batch request failed: {exc}")
                 continue
 
-            for ticket in payload.get("data", []):
+            # Expo returns tickets in the same order as the messages sent
+            # (its own documented contract), so zipping against this batch's
+            # tokens is how a ticket maps back to the token that caused it —
+            # the response itself doesn't echo the token.
+            for token, ticket in zip(batch, payload.get("data", [])):
                 if ticket.get("status") == "ok":
                     tickets_sent += 1
-                else:
-                    errors.append(ticket.get("message", "Unknown push error"))
+                    continue
+                errors.append(ticket.get("message", "Unknown push error"))
+                if ticket.get("details", {}).get("error") == "DeviceNotRegistered":
+                    dead_tokens.append(token)
 
     if errors:
         logger.warning("Push send had %s error(s): %s", len(errors), errors[:5])
+    if dead_tokens:
+        logger.info("Pruning %s dead push token(s)", len(dead_tokens))
 
-    return tickets_sent, errors
+    return tickets_sent, errors, dead_tokens
