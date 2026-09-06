@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Nightly Postgres backup for the self-hosted VPS. Run via cron.
-# Currently local-only (see README Step 7) — add an offsite sync (rclone to
+# Currently local-only (see README Step 7) - add an offsite sync (rclone to
 # Backblaze B2/S3) once a target is chosen; local backups don't protect
 # against losing the VPS itself.
 set -euo pipefail

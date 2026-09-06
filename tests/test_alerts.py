@@ -51,6 +51,31 @@ def test_broadcast_sends_to_estate_tokens(client, mock_db):
     # Regression guard: Expo's API validates this against APNs' own enum,
     # which is hyphenated ("time-sensitive"). The camelCase("timeSensitive")
     # this code shipped with made Expo reject the *entire* batch with a 400
-    # — nobody in it got pushed, silently, since a 400 here still gets
+    # - nobody in it got pushed, silently, since a 400 here still gets
     # caught and turned into a normal `errors` entry rather than raising.
     assert mock_send.call_args.kwargs["interruption_level"] == "time-sensitive"
+
+
+def test_broadcast_excludes_the_poster(client, mock_db):
+    """
+    Regression guard: the token query used to select every device in the
+    estate with no author filter at all, so whoever posted the alert got
+    it pushed to their own phone alongside everyone else's - confirmed live
+    when a super_admin posted an emergency alert and immediately got the
+    push themselves.
+    """
+    override_user(role="super_admin")
+    captured_query = {}
+
+    def scalars(query):
+        captured_query["value"] = query
+        return ["token-a"]
+
+    mock_db.scalars.side_effect = scalars
+
+    with patch("app.routers.alerts.send_push_notifications") as mock_send:
+        mock_send.return_value = (1, [], [])
+        client.post("/alerts/broadcast", json=BROADCAST_BODY)
+
+    mock_send.assert_called_once()
+    assert "profiles.id != :id" in str(captured_query["value"])

@@ -37,7 +37,7 @@ def test_notify_user_sends_to_profiles_tokens(client, mock_db):
     assert mock_send.call_args.kwargs["tokens"] == ["token-a"]
     assert mock_send.call_args.kwargs["title"] == NOTIFY_BODY["title"]
     # A routine notification must NOT ride on the emergency channel/sound/
-    # interruption-level overrides — those are alerts.py's job only.
+    # interruption-level overrides - those are alerts.py's job only.
     assert "sound" not in mock_send.call_args.kwargs
     assert "channel_id" not in mock_send.call_args.kwargs
     assert "interruption_level" not in mock_send.call_args.kwargs

@@ -38,7 +38,7 @@ def broadcast(
         db.scalars(
             select(PushToken.token)
             .join(Profile, Profile.id == PushToken.profile_id)
-            .where(Profile.estate_id == target_estate_id)
+            .where(Profile.estate_id == target_estate_id, Profile.id != user.id)
         )
     )
 
