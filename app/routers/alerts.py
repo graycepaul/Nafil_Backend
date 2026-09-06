@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
@@ -43,7 +43,7 @@ def broadcast(
     )
 
     title = CATEGORY_LABELS.get(request.category or "", request.title)
-    tickets_sent, errors = send_push_notifications(
+    tickets_sent, errors, dead_tokens = send_push_notifications(
         tokens=tokens,
         title=f"🚨 {title}",
         body=request.body,
@@ -53,6 +53,10 @@ def broadcast(
         channel_id="emergency",
         interruption_level="time-sensitive",
     )
+
+    if dead_tokens:
+        db.execute(delete(PushToken).where(PushToken.token.in_(dead_tokens)))
+        db.commit()
 
     return BroadcastResponse(
         recipients=len(tokens), tickets_sent=tickets_sent, errors=errors
