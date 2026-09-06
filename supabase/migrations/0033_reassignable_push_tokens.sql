@@ -1,4 +1,4 @@
--- A push token identifies a device, not a person — when a different
+-- A push token identifies a device, not a person - when a different
 -- resident signs in on a device that already has a token row from
 -- whoever used it last (shared device, reused test simulator, a phone
 -- passed to a new resident), push_tokens_owner_all's `using` clause
@@ -10,7 +10,7 @@
 -- This function is the sanctioned way to reassign it: it runs as the
 -- table owner (bypassing that RLS check internally) but only after
 -- confirming the caller is a genuinely authenticated user via auth.uid()
--- — never client-supplied — so it can't be used to steal someone else's
+-- - never client-supplied - so it can't be used to steal someone else's
 -- token, only to say "this token is mine now."
 
 create or replace function public.register_push_token(p_token text, p_platform text)

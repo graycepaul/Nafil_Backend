@@ -20,9 +20,9 @@ def notify_user(
     """
     Called by a Postgres trigger (private.push_notify_on_insert, see
     0028_generic_push_notifications.sql) whenever a row lands in
-    `notifications` — the DB-level guarantee that populates that table can't
+    `notifications` - the DB-level guarantee that populates that table can't
     itself reach Expo's push API, so it reaches out here instead. Not
-    user-authenticated like every other endpoint (there's no signed-in user —
+    user-authenticated like every other endpoint (there's no signed-in user -
     it's Postgres calling), hence the shared-secret header rather than a
     Supabase JWT.
     """

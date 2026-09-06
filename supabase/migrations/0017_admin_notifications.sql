@@ -1,12 +1,12 @@
 -- ══════════════════════════════════════════════════════════════════════════
--- Admin/super_admin never got notified of anything — new issues residents
+-- Admin/super_admin never got notified of anything - new issues residents
 -- reported, or emergency alerts posted by someone else (e.g. security) went
 -- unnoticed unless they happened to open the relevant tab. This adds:
 -- 1. A new issue_reported notification, fired to every admin (same estate)
 --    and super_admin (any estate) when a resident files an issue.
 -- 2. Broadens the existing emergency-announcement notification to also reach
 --    admin/security (same estate) and super_admin (any estate), not just
---    residents — excluding whoever posted it, since they already know.
+--    residents - excluding whoever posted it, since they already know.
 -- ══════════════════════════════════════════════════════════════════════════
 
 alter table notifications drop constraint notifications_type_check;
@@ -55,9 +55,9 @@ begin
   from profiles p
   where p.estate_id = new.estate_id and p.role = 'resident' and p.approved = true;
 
-  -- Emergency alerts also need to reach the people who can act on them —
+  -- Emergency alerts also need to reach the people who can act on them -
   -- the rest of the estate's staff, and every super_admin regardless of
-  -- estate — not just the residents being warned. The author already knows
+  -- estate - not just the residents being warned. The author already knows
   -- (they just posted it), so they're excluded.
   if new.severity = 'emergency' then
     insert into notifications (profile_id, type, title, body, data)

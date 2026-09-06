@@ -2,13 +2,13 @@
 -- Per-user notifications inbox
 --
 -- Until now the resident Home tab's bell icon just deep-linked into the
--- shared announcements feed — there was no notion of a notification actually
+-- shared announcements feed - there was no notion of a notification actually
 -- belonging to a specific person, so nothing else in the app (an issue you
 -- reported changing status, your visitor's pass being used at the gate, your
 -- join request getting approved, an invite you sent being accepted) ever
 -- reached it. This adds a real table for that and populates it via triggers
 -- on the events themselves, rather than relying on every call site to
--- remember to insert a notification — the same reasoning as
+-- remember to insert a notification - the same reasoning as
 -- protect_profile_privileged_columns in 0005: a DB-level guarantee survives
 -- new client code paths that a client-side insert would not.
 -- ══════════════════════════════════════════════════════════════════════════
@@ -32,7 +32,7 @@ create index notifications_unread_idx on notifications(profile_id) where read_at
 
 alter table notifications enable row level security;
 
--- Read-only from the client's side beyond marking your own read — inserts
+-- Read-only from the client's side beyond marking your own read - inserts
 -- only ever happen through the SECURITY DEFINER trigger functions below, so
 -- there's deliberately no insert/delete policy for anyone.
 create policy notifications_owner_select on notifications for select
@@ -133,8 +133,8 @@ create trigger notify_join_request_approved
   for each row execute function private.notify_join_request_approved();
 
 -- ── Staff invite accepted → whoever sent it ─────────────────────────────
--- No admin-facing inbox screen exists yet to surface these — the resident
--- Home tab's bell is the only notification UI in the app today — but the
+-- No admin-facing inbox screen exists yet to surface these - the resident
+-- Home tab's bell is the only notification UI in the app today - but the
 -- row lands correctly regardless, ready for whenever that screen exists.
 create or replace function private.notify_staff_invite_accepted() returns trigger
   language plpgsql security definer set search_path = public as $$

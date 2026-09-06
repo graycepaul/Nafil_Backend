@@ -1,8 +1,8 @@
 -- Assigning a due (0019_wallet_and_dues.sql) never notified the resident it
--- was charged to — no in-app notification, no push. They'd only find out by
+-- was charged to - no in-app notification, no push. They'd only find out by
 -- opening the Wallet screen themselves. Found during the same pre-launch
 -- notification audit that caught the missing issue-feedback notifications
--- (0036) — same trigger-on-insert pattern, so it also gets a push for free
+-- (0036) - same trigger-on-insert pattern, so it also gets a push for free
 -- via 0028's generic push-on-insert trigger.
 
 alter table notifications drop constraint notifications_type_check;

@@ -1,6 +1,6 @@
 """Sends push notifications through Expo's push service.
 
-No native FCM/APNs credentials needed on this service's end — EAS holds
+No native FCM/APNs credentials needed on this service's end - EAS holds
 those, and Expo's push API (https://exp.host/--/api/v2/push/send) is the one
 stable endpoint that routes to whichever platform each token belongs to. It
 takes up to 100 messages per request, so a large resident list is chunked.
@@ -35,18 +35,18 @@ def send_push_notifications(
 ) -> tuple[int, list[str], list[str]]:
     """
     Returns (tickets_sent, errors, dead_tokens). A ticket being accepted
-    doesn't guarantee delivery — Expo's receipt endpoint would confirm that
-    after the fact — but it does confirm Expo's push service accepted the
+    doesn't guarantee delivery - Expo's receipt endpoint would confirm that
+    after the fact - but it does confirm Expo's push service accepted the
     token and queued the message, which is enough to tell the sender "this
     went out" versus "this token/request was rejected outright".
 
-    `dead_tokens` are ones Expo reported as `DeviceNotRegistered` — the
+    `dead_tokens` are ones Expo reported as `DeviceNotRegistered` - the
     device uninstalled the app or the token otherwise permanently expired.
     Expo will keep returning this same error for these tokens forever;
     callers should delete them from `push_tokens` rather than retry.
 
     Defaults suit a routine notification (a resolved issue, a used visitor
-    pass) — normal sound/priority, the app's default Android channel, no
+    pass) - normal sound/priority, the app's default Android channel, no
     Focus/DND-bypassing interruption level. `alerts.py`'s emergency broadcast
     overrides all four; nothing else should need to.
     """
@@ -74,20 +74,20 @@ def send_push_notifications(
                     "data": data or {},
                     # Android's sound is actually set by the channel itself
                     # (channels own their sound once created; this field is
-                    # ignored there) — this is for iOS, which reads it per
+                    # ignored there) - this is for iOS, which reads it per
                     # message. A non-default value must match a sound bundled
                     # via app.json's expo-notifications plugin config.
                     "sound": sound,
                     "priority": priority,
                     "channelId": channel_id,
                     # Expo's API validates this against APNs' own enum,
-                    # which is hyphenated ("time-sensitive") — not the
+                    # which is hyphenated ("time-sensitive") - not the
                     # camelCase used everywhere else in this payload.
                     # Getting this wrong doesn't just drop the
                     # interruption level: Expo rejects the entire batch
                     # with a 400, so nobody in it gets pushed. Omitted
                     # entirely (not even at Expo's own "active" default)
-                    # for anything that isn't explicitly overriding it —
+                    # for anything that isn't explicitly overriding it -
                     # one less way for a typo here to take out a whole
                     # unrelated batch.
                     **(
@@ -108,7 +108,7 @@ def send_push_notifications(
 
             # Expo returns tickets in the same order as the messages sent
             # (its own documented contract), so zipping against this batch's
-            # tokens is how a ticket maps back to the token that caused it —
+            # tokens is how a ticket maps back to the token that caused it -
             # the response itself doesn't echo the token.
             for token, ticket in zip(batch, payload.get("data", [])):
                 if ticket.get("status") == "ok":

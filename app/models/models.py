@@ -1,6 +1,6 @@
 """SQLAlchemy models mirroring the Supabase schema.
 
-Source of truth for the schema is `supabase/migrations/` — these models are a
+Source of truth for the schema is `supabase/migrations/` - these models are a
 read/write mapping for the FastAPI service, not a migration tool. If you change
 a migration, update the matching model here.
 """

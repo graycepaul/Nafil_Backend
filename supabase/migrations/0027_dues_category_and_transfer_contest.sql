@@ -5,7 +5,7 @@
 --    soon". Adding `category` lets an admin tag a due at creation time and
 --    the wallet screen query by it instead.
 --
--- 2. A rejected transfer is a dead end for the resident today — it just
+-- 2. A rejected transfer is a dead end for the resident today - it just
 --    disappears from their "pending transfers" list with a notification to
 --    "contact estate management". `proof_url` + `contest_transfer()` let
 --    them attach a fresh proof of payment and put it back in the finance
@@ -31,7 +31,7 @@ create policy transfer_proofs_insert_own on storage.objects for insert
 -- Resident contests a rejected transfer of their own: attach a proof and put
 -- it back in the pending queue. Security definer since transfers deliberately
 -- has no update RLS policy (same reasoning as confirm_transfer/reject_transfer
--- — status changes only happen through a checked function, never a raw update).
+-- - status changes only happen through a checked function, never a raw update).
 create or replace function contest_transfer(p_transfer_id uuid, p_proof_url text) returns void
   language plpgsql security definer set search_path = public as $$
 declare
@@ -57,7 +57,7 @@ alter table notifications add constraint notifications_type_check check (type in
 ));
 
 -- Tell an estate's finance/super_admin staff when a resident resubmits a
--- rejected transfer — fans out to every profile in that role/estate, since
+-- rejected transfer - fans out to every profile in that role/estate, since
 -- notifications are per-profile and there's no single "estate finance inbox".
 create or replace function private.notify_transfer_contested() returns trigger
   language plpgsql security definer set search_path = public as $$

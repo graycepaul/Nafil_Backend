@@ -1,5 +1,5 @@
 -- The issue feedback thread (0031_issue_feedback.sql) never actually
--- notified anyone when a message was posted — neither the resident nor the
+-- notified anyone when a message was posted - neither the resident nor the
 -- admin/staff side got so much as an in-app notification, let alone a push,
 -- when the other party replied. Found during a pre-launch admin/super_admin
 -- UI pass: posting feedback as admin produced no notification for the

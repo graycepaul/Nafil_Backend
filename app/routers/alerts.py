@@ -20,7 +20,7 @@ def broadcast(
     """
     Push an emergency alert to every resident device registered in the
     target estate. The in-app announcement row is written by the client
-    directly (via Supabase, same as any other announcement) — this endpoint
+    directly (via Supabase, same as any other announcement) - this endpoint
     only does the side effect Supabase/RLS can't: reaching a resident's
     phone even if they never open the app.
     """

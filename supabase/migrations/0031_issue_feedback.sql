@@ -1,7 +1,7 @@
 -- Issue feedback loop: once an issue is marked resolved, resident and admin
 -- can go back and forth on whether the fix actually holds before the admin
 -- explicitly closes it. Comments are only insertable while status = 'resolved'
--- — that's what "the feedback loop ends at closed" means at the data layer.
+-- - that's what "the feedback loop ends at closed" means at the data layer.
 alter type issue_status add value 'closed';
 
 create table issue_comments (
@@ -67,7 +67,7 @@ create policy issue_comments_admin_insert on issue_comments for insert
   );
 
 -- profiles_select already lets admin/security/finance see everyone in their
--- estate (residents included), but a resident can only see their own row —
+-- estate (residents included), but a resident can only see their own row -
 -- so without this, the feedback thread's author name resolves to nothing for
 -- whichever admin/staff member replies. Scoped tightly: only the profile of
 -- someone who has actually commented on an issue this resident reported.

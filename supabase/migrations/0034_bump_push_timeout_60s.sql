@@ -1,7 +1,7 @@
 -- Confirmed live: with a warm backend, a real push request completes in
 -- well under a second. But a genuine Render free-tier cold start can take
 -- "50 seconds or more" (Render's own dashboard wording), which is longer
--- than 0032's 30s allowance — net._http_response showed exactly that: three
+-- than 0032's 30s allowance - net._http_response showed exactly that: three
 -- real trigger firings all timing out at the full 30000ms. This was applied
 -- directly to production ahead of this file; recorded here so the self-
 -- hosted VPS (and any future fresh database) gets the same value.

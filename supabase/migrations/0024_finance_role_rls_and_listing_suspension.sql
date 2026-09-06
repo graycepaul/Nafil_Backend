@@ -1,6 +1,6 @@
 -- Market/finance access (marketplace moderation, transfer confirmation,
 -- dues) moves from "any admin" to "only super_admin and the new finance
--- role" — a regular estate admin handles residents/issues/staff/
+-- role" - a regular estate admin handles residents/issues/staff/
 -- announcements, not money. profiles_select keeps 'admin' (that's the
 -- Residents/Staff screens, unrelated) and additionally grants 'finance' the
 -- same staff-wide read, since the market/dues/transfers screens need to

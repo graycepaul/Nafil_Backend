@@ -1,5 +1,5 @@
 -- Remote app-version gate. A single config row the client reads on every
--- launch (before requiring sign-in — an outdated app should be caught even
+-- launch (before requiring sign-in - an outdated app should be caught even
 -- for someone who isn't logged in yet), so a forced update or a "there's a
 -- newer version" nudge can go out without shipping a new build. Public read
 -- (no auth) since it has to be checkable pre-login; there's nothing here

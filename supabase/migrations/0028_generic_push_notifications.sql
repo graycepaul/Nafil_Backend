@@ -1,11 +1,11 @@
 -- Generic push notification delivery.
 --
 -- Until now, only emergency alerts resulted in an actual push to a
--- resident's phone — the client calls /alerts/broadcast explicitly, at the
+-- resident's phone - the client calls /alerts/broadcast explicitly, at the
 -- same time it posts the announcement. Every OTHER notification type
 -- (regular announcements, issue status changes, visitor pass scans, join
 -- request approvals, staff invite acceptances) only ever inserted a row
--- into `notifications` for the bell icon to read later — nothing reached
+-- into `notifications` for the bell icon to read later - nothing reached
 -- the device unless the resident happened to open the app and look.
 --
 -- This closes that gap once, generically, at the one place every
@@ -19,7 +19,7 @@ create extension if not exists pg_net;
 
 -- Shared secret the trigger below sends back to the backend (as
 -- X-Internal-Secret) so /push/notify-user can tell "this is really our own
--- trigger" apart from an arbitrary request — there's no signed-in user here
+-- trigger" apart from an arbitrary request - there's no signed-in user here
 -- for a normal Supabase JWT to authenticate. Set INTERNAL_PUSH_SECRET to
 -- this exact value in the backend's environment (Render dashboard).
 select vault.create_secret(
@@ -35,7 +35,7 @@ declare
 begin
   -- Emergency announcements are already pushed by /alerts/broadcast, called
   -- explicitly by the client in the same action that posts the announcement
-  -- — pushing again here would double-notify every recipient.
+  -- - pushing again here would double-notify every recipient.
   if new.type = 'emergency' then
     return new;
   end if;
@@ -48,7 +48,7 @@ begin
     body := jsonb_build_object('profile_id', new.profile_id, 'title', new.title, 'body', new.body, 'data', new.data),
     -- pg_net's default is 5s. Render's free tier cold-starts after
     -- inactivity and can take well over that to respond to the first
-    -- request — confirmed directly via net._http_response showing a real
+    -- request - confirmed directly via net._http_response showing a real
     -- 5000ms timeout mid-response. 30s covers a cold start; this is a
     -- stopgap, not a fix for the cold start itself (see the infra plan).
     timeout_milliseconds := 30000

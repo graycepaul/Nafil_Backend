@@ -6,7 +6,7 @@
 -- 2. Consolidate overlapping permissive policies. A FOR ALL policy plus a separate
 --    SELECT policy means both get evaluated on every read; one policy per action is
 --    both faster and easier to reason about.
--- 3. Index the foreign keys that RLS filters on — profiles.estate_id especially, since
+-- 3. Index the foreign keys that RLS filters on - profiles.estate_id especially, since
 --    almost every policy compares against it.
 
 create index if not exists profiles_estate_idx on profiles(estate_id);

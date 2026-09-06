@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════════════
--- Nafil Estates — test seed data
+-- Nafil Estates - test seed data
 --
 -- Two estates, ten accounts (the original five review-credential accounts,
 -- one per role, plus five more spread across both estates/roles so there's
@@ -11,7 +11,7 @@
 --
 -- Password for every account: NafilTest123!
 --
--- Applied to project itfepppqjtodmizbglze. Safe to re-run — the cleanup
+-- Applied to project itfepppqjtodmizbglze. Safe to re-run - the cleanup
 -- block below removes only the seeded rows (@nafil.test users and the two
 -- fixed estate UUIDs), nothing else.
 --
@@ -22,8 +22,8 @@
 
 -- ── Cleanup (idempotent re-run) ──────────────────────────────────────────
 -- Estates first, deliberately: visitor_logs.security_id has no ON DELETE
--- action (plain RESTRICT), so deleting auth.users first — which cascades to
--- profiles — fails once the security profile has any visitor_logs row
+-- action (plain RESTRICT), so deleting auth.users first - which cascades to
+-- profiles - fails once the security profile has any visitor_logs row
 -- against it. Deleting estates first cascades away visitor_passes/
 -- visitor_logs/issues/announcements via their estate_id FKs, so by the time
 -- auth.users is deleted there's nothing left to restrict it.
@@ -62,13 +62,13 @@ insert into auth.users (
    'superadmin@nafil.test', crypt('NafilTest123!', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}','{"full_name":"Ibrahim Yusuf"}', now(), now(), '','','',''),
 
-  -- Not part of the review credential set — exists so super_admin's
+  -- Not part of the review credential set - exists so super_admin's
   -- cross-estate view has a second estate's data to actually show.
   ('00000000-0000-0000-0000-000000000000','b0000000-0000-4000-8000-000000000001','authenticated','authenticated',
    'heights@nafil.test', crypt('NafilTest123!', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}','{"full_name":"Fatima Bello"}', now(), now(), '','','',''),
 
-  -- More accounts across both estates — enough volume in each role/estate
+  -- More accounts across both estates - enough volume in each role/estate
   -- combination to actually exercise the admin/super_admin search-and-
   -- filter-by-estate feature, not just prove the UI renders.
   ('00000000-0000-0000-0000-000000000000','b0000000-0000-4000-8000-000000000002','authenticated','authenticated',
@@ -97,7 +97,7 @@ from auth.users u
 where u.email like '%@nafil.test';
 
 -- ── Profiles (rows auto-created by the signup trigger) ───────────────────
--- avatar_url points at i.pravatar.cc — a placeholder-avatar service made for
+-- avatar_url points at i.pravatar.cc - a placeholder-avatar service made for
 -- exactly this (stable per-seed photo, no real person's image or usage-rights
 -- question). ?img=N pins a specific face rather than the random default.
 update profiles set estate_id='11111111-1111-1111-1111-111111111111', role='resident', unit_no='B12', phone='+2348031234567', approved=true, avatar_url='https://i.pravatar.cc/300?img=47' where id='a0000000-0000-4000-8000-000000000001';
@@ -141,10 +141,10 @@ insert into issues (estate_id, resident_id, category, description, status, creat
 -- ── Announcements (incl. two emergencies, one per estate) ─────────────────
 insert into announcements (estate_id, author_id, title, body, severity, created_at) values
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000004','Service charge due 5th August','Kindly settle Q3 service charge before the 5th to avoid late fees.','info', now() - interval '3 days'),
-  ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000004','Estate AGM — Saturday 10am','Annual general meeting holds at the clubhouse. All owners are encouraged to attend.','info', now() - interval '1 day'),
+  ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000004','Estate AGM - Saturday 10am','Annual general meeting holds at the clubhouse. All owners are encouraged to attend.','info', now() - interval '1 day'),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000003','Water supply interruption','Mains repair on Block B today between 2pm and 6pm. Please store water.','emergency', now() - interval '4 hours'),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000004','New visitor gate hours','From next week, the pedestrian gate on Close 3 opens at 6am instead of 6:30am.','info', now() - interval '6 days'),
   ('11111111-1111-1111-1111-111111111111','a0000000-0000-4000-8000-000000000003','CCTV maintenance this weekend','Cameras along the perimeter fence will be offline for servicing on Saturday morning.','info', now() - interval '10 hours'),
   ('22222222-2222-2222-2222-222222222222','a0000000-0000-4000-8000-000000000005','Heights notice','Visible only to Nafil Heights residents.','info', now()),
   ('22222222-2222-2222-2222-222222222222','b0000000-0000-4000-8000-000000000003','Generator maintenance Thursday','Backup generator servicing 9am–1pm Thursday. Expect brief power blips during switchover tests.','info', now() - interval '2 days'),
-  ('22222222-2222-2222-2222-222222222222','b0000000-0000-4000-8000-000000000004','Perimeter fence breach attempt','Attempted break-in at the north fence overnight. Extra patrols in place — report anything suspicious.','emergency', now() - interval '6 hours');
+  ('22222222-2222-2222-2222-222222222222','b0000000-0000-4000-8000-000000000004','Perimeter fence breach attempt','Attempted break-in at the north fence overnight. Extra patrols in place - report anything suspicious.','emergency', now() - interval '6 hours');

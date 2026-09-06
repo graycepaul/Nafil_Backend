@@ -1,5 +1,5 @@
 -- A suspended listing must stay frozen for its seller until finance/
--- super_admin lifts it — otherwise the seller could just set it back to
+-- super_admin lifts it - otherwise the seller could just set it back to
 -- 'active' themselves (or edit it) via the same seller_id = me clause that
 -- lets them manage their own listings normally. The USING clause on an
 -- UPDATE policy evaluates against the row as it exists *before* the

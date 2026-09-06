@@ -1,4 +1,4 @@
--- Announcements had no image field at all — unlike issues.photo_urls, this
+-- Announcements had no image field at all - unlike issues.photo_urls, this
 -- isn't "existed but unused", it genuinely didn't exist. Adding a single
 -- optional photo (not an array, unlike issues): an announcement is one
 -- notice with at most one illustrative image (a poster, a photo of the
@@ -16,7 +16,7 @@ create policy announcement_photos_select_public on storage.objects for select
 -- super_admin, admin, or security, each restricted to their own estate.
 -- Path convention `{estate_id}/...` rather than `{uploader_id}/...` since
 -- more than one staff member's role can post announcements for the same
--- estate and none of them need a private folder here — the bucket is
+-- estate and none of them need a private folder here - the bucket is
 -- already public read, so there's no privacy boundary to enforce beyond
 -- "you can only write into your own estate's folder".
 create policy announcement_photos_insert_own_estate on storage.objects for insert

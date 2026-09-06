@@ -25,7 +25,7 @@ def visitor_report(
     Visitor log for the caller's own estate over a date range, as a PDF.
 
     estate_id used to be a caller-supplied query param, checked against
-    nothing — any admin/super_admin could read any other estate's visitor
+    nothing - any admin/super_admin could read any other estate's visitor
     log just by changing it. There's currently no client calling this
     endpoint at all (no UI wired up yet, unlike /alerts/broadcast, which
     has the same "super_admin may target another estate" shape done
