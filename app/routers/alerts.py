@@ -34,13 +34,17 @@ def broadcast(
             detail="Your account isn't assigned to an estate",
         )
 
-    tokens = list(
-        db.scalars(
-            select(PushToken.token)
-            .join(Profile, Profile.id == PushToken.profile_id)
-            .where(Profile.estate_id == target_estate_id, Profile.id != user.id)
-        )
+    token_query = (
+        select(PushToken.token)
+        .join(Profile, Profile.id == PushToken.profile_id)
+        .where(Profile.estate_id == target_estate_id)
     )
+    # Per-device, not per-account: excluding every device on the poster's
+    # profile would also silence a tablet they aren't posting from right
+    # now, which they'd still expect to hear the alert on.
+    if request.poster_token:
+        token_query = token_query.where(PushToken.token != request.poster_token)
+    tokens = list(db.scalars(token_query))
 
     title = CATEGORY_LABELS.get(request.category or "", request.title)
     tickets_sent, errors, dead_tokens = send_push_notifications(

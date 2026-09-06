@@ -56,26 +56,42 @@ def test_broadcast_sends_to_estate_tokens(client, mock_db):
     assert mock_send.call_args.kwargs["interruption_level"] == "time-sensitive"
 
 
-def test_broadcast_excludes_the_poster(client, mock_db):
+def test_broadcast_excludes_the_posters_device(client, mock_db):
     """
     Regression guard: the token query used to select every device in the
-    estate with no author filter at all, so whoever posted the alert got
-    it pushed to their own phone alongside everyone else's - confirmed live
+    estate with no exclusion at all, so whoever posted the alert got it
+    pushed to their own phone alongside everyone else's - confirmed live
     when a super_admin posted an emergency alert and immediately got the
-    push themselves.
+    push themselves. Per-device (poster_token), not per-account: the
+    poster's *other* devices should still get pushed.
     """
     override_user(role="super_admin")
     captured_query = {}
 
     def scalars(query):
         captured_query["value"] = query
-        return ["token-a"]
+        return ["token-b"]
 
     mock_db.scalars.side_effect = scalars
 
     with patch("app.routers.alerts.send_push_notifications") as mock_send:
         mock_send.return_value = (1, [], [])
-        client.post("/alerts/broadcast", json=BROADCAST_BODY)
+        client.post(
+            "/alerts/broadcast", json={**BROADCAST_BODY, "poster_token": "token-a"}
+        )
 
     mock_send.assert_called_once()
-    assert "profiles.id != :id" in str(captured_query["value"])
+    assert "push_tokens.token != :token_1" in str(captured_query["value"])
+
+
+def test_broadcast_without_poster_token_excludes_nothing(client, mock_db):
+    """An older client that doesn't send poster_token yet shouldn't have the
+    whole recipient list silently wiped out by a bad null comparison."""
+    override_user(role="security")
+    mock_db.scalars.return_value = ["token-a", "token-b"]
+
+    with patch("app.routers.alerts.send_push_notifications") as mock_send:
+        mock_send.return_value = (2, [], [])
+        response = client.post("/alerts/broadcast", json=BROADCAST_BODY)
+
+    assert response.json()["recipients"] == 2
