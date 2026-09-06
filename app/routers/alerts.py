@@ -47,7 +47,11 @@ def broadcast(
         tokens=tokens,
         title=f"🚨 {title}",
         body=request.body,
-        data={"category": request.category, "kind": "emergency_alert"},
+        data={
+            "category": request.category,
+            "kind": "emergency_alert",
+            "photo_url": request.photo_url,
+        },
         sound="emergency_alert.wav",
         priority="high",
         channel_id="emergency",

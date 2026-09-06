@@ -18,6 +18,10 @@ class BroadcastRequest(BaseModel):
     # one. Ignored for admin/security, who can only ever broadcast to their
     # own estate regardless of what's sent here.
     estate_id: str | None = None
+    # The in-app announcement's own photo, if the admin attached one - passed
+    # straight through into the push payload so the foreground emergency
+    # modal can render the same image, not just title/body.
+    photo_url: str | None = None
 
 
 class BroadcastResponse(BaseModel):
