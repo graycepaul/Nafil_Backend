@@ -15,7 +15,7 @@ alter table profiles add column avatar_url text;
 -- A resident can still update their own full_name/phone/avatar_url/unit_no
 -- freely (profiles_update's USING/CHECK already allows id = auth.uid()).
 -- This trigger silently preserves role/approved/estate_id on any UPDATE not
--- performed by an admin/super_admin, regardless of what the client sent —
+-- performed by an admin/super_admin, regardless of what the client sent -
 -- the only sanctioned way to change them is approve_join_request() below.
 create or replace function private.protect_profile_privileged_columns() returns trigger
   language plpgsql security definer set search_path = public as $$
@@ -60,7 +60,7 @@ create table estate_join_requests (
 create index join_requests_profile_idx on estate_join_requests(profile_id);
 create index join_requests_estate_idx on estate_join_requests(estate_id);
 
--- One pending request per resident at a time — cheap DB-level guard against
+-- One pending request per resident at a time - cheap DB-level guard against
 -- double submission; a rejected request doesn't block a fresh attempt since
 -- the index only covers status = 'pending'.
 create unique index one_pending_request_per_profile
@@ -81,7 +81,7 @@ create policy join_requests_select on estate_join_requests for select
 
 -- Deliberately no UPDATE/DELETE policy for anyone, including admins. Status
 -- changes only happen through approve_join_request/reject_join_request below
--- (SECURITY DEFINER, bypasses RLS, but re-checks authorization internally) —
+-- (SECURITY DEFINER, bypasses RLS, but re-checks authorization internally) -
 -- so even a compromised or buggy client can never flip status directly.
 
 -- ── Approval actions ─────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ $$;
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('avatars', 'avatars', true, 5242880, array['image/jpeg', 'image/png', 'image/webp']);
 
--- Path convention: {user_id}/avatar.<ext> — each user may only write inside
+-- Path convention: {user_id}/avatar.<ext> - each user may only write inside
 -- their own folder. Bucket is public, so reads need no policy.
 create policy avatar_insert_own on storage.objects for insert
   to authenticated

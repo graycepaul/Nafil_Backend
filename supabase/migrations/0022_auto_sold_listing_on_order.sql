@@ -1,4 +1,4 @@
--- Placing an order for a good previously did nothing to the listing itself —
+-- Placing an order for a good previously did nothing to the listing itself -
 -- it stayed 'active' and buyable by anyone else, since the buyer has no
 -- update permission on someone else's listing (listings_update only allows
 -- the seller or estate staff). A resident could buy the same sofa twice.

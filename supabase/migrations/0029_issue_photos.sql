@@ -1,5 +1,5 @@
 -- `issues.photo_urls` has existed since 0001_init.sql, but nothing ever gave
--- residents a way to actually attach photos when reporting an issue — no
+-- residents a way to actually attach photos when reporting an issue - no
 -- storage bucket existed for them. Same shape as listing-photos/avatars:
 -- public bucket, path scoped to the uploader's own folder.
 

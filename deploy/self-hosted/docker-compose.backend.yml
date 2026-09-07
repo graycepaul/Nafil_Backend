@@ -17,6 +17,16 @@ services:
       start_period: 10s
     ports:
       - "127.0.0.1:8010:8000"
+    # No limit at all meant a leak or a request flood in this container
+    # could starve the co-located Postgres/Supabase containers on the same
+    # host. These are a starting point, not a measured ceiling - tune to
+    # the VPS's actual spec (`docker stats` after a day of real traffic is
+    # the honest way to pick a real number).
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 768M
 
 networks:
   supabase_default:

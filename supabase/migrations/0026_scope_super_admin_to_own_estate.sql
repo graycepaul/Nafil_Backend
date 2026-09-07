@@ -1,14 +1,14 @@
 -- super_admin becomes an estate-scoped "owner" role instead of a
 -- platform-wide overseer of every estate on the app. A resident creating a
--- new community via "Create Community" becomes that estate's super_admin —
--- its owner — not someone who can also see every other community's
+-- new community via "Create Community" becomes that estate's super_admin -
+-- its owner - not someone who can also see every other community's
 -- residents, staff, dues, transfers, etc. (A future "manage multiple
 -- estates" capability, if built, would be additive on top of this, not a
 -- reason to keep the current unconditional global bypass around.)
 --
 -- estates_select stays open (qual = true): every user, including someone
 -- mid-onboarding picking which estate to join, needs to browse estate
--- *names* — that was never the leak. estates_insert is untouched too: a new
+-- *names* - that was never the leak. estates_insert is untouched too: a new
 -- estate is created via private.handle_new_user()'s trigger (SECURITY
 -- DEFINER, bypasses RLS entirely), not a client-side insert, so that policy
 -- is already inert.

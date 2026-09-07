@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════════════
--- Staff (security) invite flow — access code instead of a magic link
+-- Staff (security) invite flow - access code instead of a magic link
 --
 -- Why a code, not just Supabase's inviteUserByEmail: that requires the
 -- service-role key server-side (which the mobile app must never hold) and
@@ -10,8 +10,8 @@
 -- Confirmed empirically: this project requires email confirmation before a
 -- session exists, so `signUp` never returns a session immediately. That
 -- forces profile details (name/phone/photo) to be saved on the invite row
--- itself during the anonymous phase — there's no profile to attach them to
--- yet — and finalized only once the confirmation click produces a real
+-- itself during the anonymous phase - there's no profile to attach them to
+-- yet - and finalized only once the confirmation click produces a real
 -- session, days later if that's how long it takes.
 -- ══════════════════════════════════════════════════════════════════════════
 
@@ -41,7 +41,7 @@ create table staff_invites (
 create index staff_invites_estate_idx on staff_invites(estate_id);
 create index staff_invites_email_idx on staff_invites(lower(email));
 
--- One live invite per email at a time — a re-invite should revoke the old one
+-- One live invite per email at a time - a re-invite should revoke the old one
 -- first rather than create a second pending row for the same address.
 create unique index one_pending_invite_per_email
   on staff_invites(lower(email))
@@ -71,7 +71,7 @@ create policy staff_invites_select on staff_invites for select
 -- accept_staff_invite_by_email() is called by the invitee themselves, whose
 -- own role is still 'resident' at that moment (the signup trigger's default).
 -- protect_profile_privileged_columns would otherwise block them from setting
--- their own role/estate_id/approved — correctly, for a normal client update,
+-- their own role/estate_id/approved - correctly, for a normal client update,
 -- but this is the one sanctioned exception. A transaction-local GUC flag
 -- lets a specific SECURITY DEFINER function announce "this update is mine,
 -- let it through" without weakening the trigger for every other caller.
@@ -124,13 +124,13 @@ end;
 $$;
 
 -- ── Authenticated: finalize on first real login post-confirmation ──────
--- Matches by the caller's own verified email, not a code — the code's job
+-- Matches by the caller's own verified email, not a code - the code's job
 -- ended once save_staff_invite_profile ran; threading it through the
 -- email-confirmation redirect afterward would be one more fragile hop.
 --
 -- The bypass GUC is transaction-local (safe under PostgREST's one-transaction-
 -- per-request model), but it's also turned back off explicitly right after
--- the one UPDATE it's meant to guard — defense in depth rather than relying
+-- the one UPDATE it's meant to guard - defense in depth rather than relying
 -- solely on transaction boundaries. Verified in testing: without the explicit
 -- reset, a second, unrelated UPDATE later in the *same* transaction could ride
 -- the still-open bypass window.

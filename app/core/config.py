@@ -4,12 +4,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # Supabase project — the FastAPI service is a secondary consumer of the
+    # Supabase project - the FastAPI service is a secondary consumer of the
     # same Postgres database and auth users; it never owns the schema.
     supabase_url: str
     supabase_service_role_key: str
     # Only needed as a fallback for legacy HS256-signed tokens (no `kid` in
-    # the header) — this project's current session tokens are verified
+    # the header) - this project's current session tokens are verified
     # against the JWKS endpoint instead (see app/core/security.py) and don't
     # need this at all.
     supabase_jwt_secret: str = ""
@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     database_url: str
 
     environment: str = "development"
-    # A native app (iOS/Android) isn't subject to CORS at all — only the web
+    # A native app (iOS/Android) isn't subject to CORS at all - only the web
     # build of Nafil Mobile, running in a browser, needs its origin allowed
     # here. Defaults to the real production/dev origins rather than "*" so a
     # deployment that never sets CORS_ORIGINS explicitly doesn't end up
@@ -31,14 +31,14 @@ class Settings(BaseSettings):
     ]
 
     # Optional: an Expo access token scopes/authenticates push-send requests
-    # to this project specifically. Not required to send push at all — Expo's
-    # push API works without it — but recommended once you have an EAS
+    # to this project specifically. Not required to send push at all - Expo's
+    # push API works without it - but recommended once you have an EAS
     # project, so an unrelated app's leaked push tokens can't be used to spam
     # notifications through your account.
     expo_access_token: str = ""
 
     # Shared secret a Postgres trigger sends back to this service (as the
-    # X-Internal-Secret header) when it wants a push sent — see
+    # X-Internal-Secret header) when it wants a push sent - see
     # supabase/migrations/0028_generic_push_notifications.sql. Not a user's
     # credential, so it isn't verified against Supabase's JWKS like normal
     # requests; this is the only thing stopping /push/notify-user from being
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     # stored in that migration's `vault.create_secret` call exactly.
     internal_push_secret: str = ""
 
-    # Error tracking — leave unset to disable Sentry entirely (e.g. local dev).
+    # Error tracking - leave unset to disable Sentry entirely (e.g. local dev).
     sentry_dsn: str = ""
 
 

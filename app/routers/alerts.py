@@ -20,7 +20,7 @@ def broadcast(
     """
     Push an emergency alert to every resident device registered in the
     target estate. The in-app announcement row is written by the client
-    directly (via Supabase, same as any other announcement) — this endpoint
+    directly (via Supabase, same as any other announcement) - this endpoint
     only does the side effect Supabase/RLS can't: reaching a resident's
     phone even if they never open the app.
     """
@@ -34,20 +34,28 @@ def broadcast(
             detail="Your account isn't assigned to an estate",
         )
 
-    tokens = list(
-        db.scalars(
-            select(PushToken.token)
-            .join(Profile, Profile.id == PushToken.profile_id)
-            .where(Profile.estate_id == target_estate_id)
-        )
+    token_query = (
+        select(PushToken.token)
+        .join(Profile, Profile.id == PushToken.profile_id)
+        .where(Profile.estate_id == target_estate_id)
     )
+    # Per-device, not per-account: excluding every device on the poster's
+    # profile would also silence a tablet they aren't posting from right
+    # now, which they'd still expect to hear the alert on.
+    if request.poster_token:
+        token_query = token_query.where(PushToken.token != request.poster_token)
+    tokens = list(db.scalars(token_query))
 
     title = CATEGORY_LABELS.get(request.category or "", request.title)
     tickets_sent, errors, dead_tokens = send_push_notifications(
         tokens=tokens,
         title=f"🚨 {title}",
         body=request.body,
-        data={"category": request.category, "kind": "emergency_alert"},
+        data={
+            "category": request.category,
+            "kind": "emergency_alert",
+            "photo_url": request.photo_url,
+        },
         sound="emergency_alert.wav",
         priority="high",
         channel_id="emergency",

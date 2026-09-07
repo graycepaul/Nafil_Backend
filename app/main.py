@@ -12,7 +12,7 @@ if settings.sentry_dsn:
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         environment=settings.environment,
-        # No performance tracing yet — just capture unhandled errors for now.
+        # No performance tracing yet - just capture unhandled errors for now.
         traces_sample_rate=0.0,
         send_default_pii=False,
     )
@@ -46,7 +46,7 @@ app.add_middleware(
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
     """
-    A couple of low-cost, no-downside response headers — not a full CSP
+    A couple of low-cost, no-downside response headers - not a full CSP
     (this API serves JSON/PDFs to native apps and a browser SPA, not HTML
     it renders itself, so there's no markup surface for a CSP to protect).
     """

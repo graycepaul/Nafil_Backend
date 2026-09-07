@@ -1,4 +1,4 @@
--- profiles_select couldn't see an applicant's profile until AFTER approval —
+-- profiles_select couldn't see an applicant's profile until AFTER approval -
 -- chicken-and-egg, since estate_id (what the admin clause checks) is exactly
 -- what's pending. Found live: the admin queue rendered every applicant as
 -- "Unnamed" because the embedded profiles join returned nothing under RLS.

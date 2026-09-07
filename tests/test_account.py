@@ -40,7 +40,7 @@ def test_delete_account_upstream_failure(client):
 
 def test_delete_account_already_deleted_is_success(client):
     """A retry after an earlier request whose response never reached the
-    client (e.g. dropped connection) hits an already-deleted user — Supabase
+    client (e.g. dropped connection) hits an already-deleted user - Supabase
     returns 404, which must resolve as success rather than a confusing
     "failed, try again" error for an account that's already gone."""
     override_user()

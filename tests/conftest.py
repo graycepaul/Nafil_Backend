@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 
 # Settings is instantiated at import time (app/core/config.py), so required
-# env vars must exist before anything imports app.main — tests never touch a
+# env vars must exist before anything imports app.main - tests never touch a
 # real Supabase project, so these are just placeholders satisfying validation.
 os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
 os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "test-service-role-key")

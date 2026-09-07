@@ -23,7 +23,7 @@ def delete_account(user: CurrentUser = Depends(get_current_user)) -> None:
     request already deleted the account but its response never reached the
     client (dropped connection, timeout), a retry arrives with that same
     still-valid token and Supabase's Admin API correctly returns 404 for the
-    now-missing user — treated as success here, since the caller's actual
+    now-missing user - treated as success here, since the caller's actual
     goal ("this account should not exist") is already true. Without this, a
     retry after an ambiguous first attempt surfaces a confusing "failed, try
     again" error for an account that was, in fact, already deleted.

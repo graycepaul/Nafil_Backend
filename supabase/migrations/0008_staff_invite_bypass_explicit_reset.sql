@@ -5,7 +5,7 @@
 -- would be a real problem if anything ever executes multiple statements in a
 -- shared transaction (a future RPC, a script, anything). Turning it back off
 -- explicitly right after the one UPDATE it's meant to guard removes the
--- reliance on transaction boundaries entirely — belt and suspenders.
+-- reliance on transaction boundaries entirely - belt and suspenders.
 create or replace function public.accept_staff_invite_by_email()
 returns table (accepted boolean, granted_role user_role)
 language plpgsql security definer set search_path = public as $$

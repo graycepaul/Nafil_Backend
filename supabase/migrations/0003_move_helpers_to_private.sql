@@ -1,5 +1,5 @@
 -- The RLS helper functions must be SECURITY DEFINER (they read `profiles`, which is
--- itself RLS-protected — without DEFINER the profiles policies would recurse infinitely).
+-- itself RLS-protected - without DEFINER the profiles policies would recurse infinitely).
 -- But SECURITY DEFINER functions sitting in `public` are exposed as REST RPC endpoints,
 -- which Supabase's security advisor flags. Moving them to a `private` schema keeps them
 -- usable from RLS policies while removing them from the exposed API surface.

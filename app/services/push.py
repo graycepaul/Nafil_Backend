@@ -1,6 +1,6 @@
 """Sends push notifications through Expo's push service.
 
-No native FCM/APNs credentials needed on this service's end — EAS holds
+No native FCM/APNs credentials needed on this service's end - EAS holds
 those, and Expo's push API (https://exp.host/--/api/v2/push/send) is the one
 stable endpoint that routes to whichever platform each token belongs to. It
 takes up to 100 messages per request, so a large resident list is chunked.
@@ -18,8 +18,108 @@ _PUSH_URL = "https://exp.host/--/api/v2/push/send"
 _CHUNK_SIZE = 100
 
 
-def _chunk(items: list[str], size: int) -> list[list[str]]:
+def _chunk(items: list, size: int) -> list[list]:
     return [items[i : i + size] for i in range(0, len(items), size)]
+
+
+def send_push_messages(messages: list[dict]) -> tuple[int, list[str], list[str]]:
+    """
+    Lower-level sender: each dict is already a complete Expo message
+    (must include "to"; title/body/data/sound/etc as needed). Chunks into
+    Expo's 100-per-request limit regardless of which notification or
+    recipient a given message belongs to - this is what makes a
+    500-recipient batch ~5 Expo calls instead of 500 (see
+    app/routers/push.py's /notify-batch, which is what turns N separate
+    `/push/notify-user` requests, one per resident, into a single request
+    carrying N items).
+
+    Returns (tickets_sent, errors, dead_tokens) - see send_push_notifications
+    for what these mean; identical contract, just decoupled from "one
+    title/body shared by every token" so a batch of otherwise-unrelated
+    notifications can be sent in one shot.
+    """
+    if not messages:
+        return 0, [], []
+
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    if settings.expo_access_token:
+        headers["Authorization"] = f"Bearer {settings.expo_access_token}"
+
+    tickets_sent = 0
+    errors: list[str] = []
+    dead_tokens: list[str] = []
+
+    with httpx.Client(timeout=10) as client:
+        for batch in _chunk(messages, _CHUNK_SIZE):
+            try:
+                resp = client.post(_PUSH_URL, headers=headers, json=batch)
+                resp.raise_for_status()
+                payload = resp.json()
+            except (httpx.HTTPError, ValueError) as exc:
+                errors.append(f"Batch request failed: {exc}")
+                continue
+
+            # Expo returns tickets in the same order as the messages sent
+            # (its own documented contract), so zipping against this batch's
+            # messages is how a ticket maps back to the token that caused it -
+            # the response itself doesn't echo the token.
+            for message, ticket in zip(batch, payload.get("data", [])):
+                if ticket.get("status") == "ok":
+                    tickets_sent += 1
+                    continue
+                errors.append(ticket.get("message", "Unknown push error"))
+                if ticket.get("details", {}).get("error") == "DeviceNotRegistered":
+                    dead_tokens.append(message["to"])
+
+    if errors:
+        logger.warning("Push send had %s error(s): %s", len(errors), errors[:5])
+    if dead_tokens:
+        logger.info("Pruning %s dead push token(s)", len(dead_tokens))
+
+    return tickets_sent, errors, dead_tokens
+
+
+def _build_messages(
+    tokens: list[str],
+    title: str,
+    body: str,
+    data: dict | None,
+    sound: str,
+    priority: str,
+    channel_id: str,
+    interruption_level: str | None,
+) -> list[dict]:
+    return [
+        {
+            "to": token,
+            "title": title,
+            "body": body,
+            "data": data or {},
+            # Android's sound is actually set by the channel itself
+            # (channels own their sound once created; this field is
+            # ignored there) - this is for iOS, which reads it per
+            # message. A non-default value must match a sound bundled
+            # via app.json's expo-notifications plugin config.
+            "sound": sound,
+            "priority": priority,
+            "channelId": channel_id,
+            # Expo's API validates this against APNs' own enum,
+            # which is hyphenated ("time-sensitive") - not the
+            # camelCase used everywhere else in this payload.
+            # Getting this wrong doesn't just drop the
+            # interruption level: Expo rejects the entire batch
+            # with a 400, so nobody in it gets pushed. Omitted
+            # entirely (not even at Expo's own "active" default)
+            # for anything that isn't explicitly overriding it -
+            # one less way for a typo here to take out a whole
+            # unrelated batch.
+            **({"interruptionLevel": interruption_level} if interruption_level else {}),
+        }
+        for token in tokens
+    ]
 
 
 def send_push_notifications(
@@ -35,92 +135,24 @@ def send_push_notifications(
 ) -> tuple[int, list[str], list[str]]:
     """
     Returns (tickets_sent, errors, dead_tokens). A ticket being accepted
-    doesn't guarantee delivery — Expo's receipt endpoint would confirm that
-    after the fact — but it does confirm Expo's push service accepted the
+    doesn't guarantee delivery - Expo's receipt endpoint would confirm that
+    after the fact - but it does confirm Expo's push service accepted the
     token and queued the message, which is enough to tell the sender "this
     went out" versus "this token/request was rejected outright".
 
-    `dead_tokens` are ones Expo reported as `DeviceNotRegistered` — the
+    `dead_tokens` are ones Expo reported as `DeviceNotRegistered` - the
     device uninstalled the app or the token otherwise permanently expired.
     Expo will keep returning this same error for these tokens forever;
     callers should delete them from `push_tokens` rather than retry.
 
     Defaults suit a routine notification (a resolved issue, a used visitor
-    pass) — normal sound/priority, the app's default Android channel, no
+    pass) - normal sound/priority, the app's default Android channel, no
     Focus/DND-bypassing interruption level. `alerts.py`'s emergency broadcast
     overrides all four; nothing else should need to.
     """
     if not tokens:
         return 0, [], []
-
-    headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-    if settings.expo_access_token:
-        headers["Authorization"] = f"Bearer {settings.expo_access_token}"
-
-    tickets_sent = 0
-    errors: list[str] = []
-    dead_tokens: list[str] = []
-
-    with httpx.Client(timeout=10) as client:
-        for batch in _chunk(tokens, _CHUNK_SIZE):
-            messages = [
-                {
-                    "to": token,
-                    "title": title,
-                    "body": body,
-                    "data": data or {},
-                    # Android's sound is actually set by the channel itself
-                    # (channels own their sound once created; this field is
-                    # ignored there) — this is for iOS, which reads it per
-                    # message. A non-default value must match a sound bundled
-                    # via app.json's expo-notifications plugin config.
-                    "sound": sound,
-                    "priority": priority,
-                    "channelId": channel_id,
-                    # Expo's API validates this against APNs' own enum,
-                    # which is hyphenated ("time-sensitive") — not the
-                    # camelCase used everywhere else in this payload.
-                    # Getting this wrong doesn't just drop the
-                    # interruption level: Expo rejects the entire batch
-                    # with a 400, so nobody in it gets pushed. Omitted
-                    # entirely (not even at Expo's own "active" default)
-                    # for anything that isn't explicitly overriding it —
-                    # one less way for a typo here to take out a whole
-                    # unrelated batch.
-                    **(
-                        {"interruptionLevel": interruption_level}
-                        if interruption_level
-                        else {}
-                    ),
-                }
-                for token in batch
-            ]
-            try:
-                resp = client.post(_PUSH_URL, headers=headers, json=messages)
-                resp.raise_for_status()
-                payload = resp.json()
-            except (httpx.HTTPError, ValueError) as exc:
-                errors.append(f"Batch request failed: {exc}")
-                continue
-
-            # Expo returns tickets in the same order as the messages sent
-            # (its own documented contract), so zipping against this batch's
-            # tokens is how a ticket maps back to the token that caused it —
-            # the response itself doesn't echo the token.
-            for token, ticket in zip(batch, payload.get("data", [])):
-                if ticket.get("status") == "ok":
-                    tickets_sent += 1
-                    continue
-                errors.append(ticket.get("message", "Unknown push error"))
-                if ticket.get("details", {}).get("error") == "DeviceNotRegistered":
-                    dead_tokens.append(token)
-
-    if errors:
-        logger.warning("Push send had %s error(s): %s", len(errors), errors[:5])
-    if dead_tokens:
-        logger.info("Pruning %s dead push token(s)", len(dead_tokens))
-
-    return tickets_sent, errors, dead_tokens
+    messages = _build_messages(
+        tokens, title, body, data, sound, priority, channel_id, interruption_level
+    )
+    return send_push_messages(messages)
