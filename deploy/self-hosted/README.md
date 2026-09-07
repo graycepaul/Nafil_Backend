@@ -152,11 +152,15 @@ Before this stack sees any real traffic, per the infrastructure plan:
   `https://vps.nafilestates.com/health`.
 - **Error tracking** - add a Sentry DSN to `.env.backend` if/when the
   backend is wired for it.
-- **Nightly backups** - cron a `pg_dump` from the `db` container to offsite
-  storage, with a check that the dump actually succeeded (not just that the
-  cron job ran).
+- **Nightly backups** - `backup.sh` in this directory does the `pg_dump`,
+  gzips it, and encrypts it (AES-256, via `openssl enc`) with a passphrase
+  read from `~/.backup_passphrase` (generate one: `openssl rand -base64 32 >
+  ~/.backup_passphrase && chmod 600 ~/.backup_passphrase`). Cron it nightly,
+  and still add an offsite sync (rclone to Backblaze B2/S3 or similar) once
+  a target is chosen - encrypted local-only backups still die with the VPS.
 - **Test the restore** - before this VPS carries real data, restore a dump
-  onto a throwaway database and confirm it works.
+  onto a throwaway database and confirm it works:
+  `openssl enc -d -aes-256-cbc -pbkdf2 -pass file:~/.backup_passphrase -in nafil_db_TIMESTAMP.sql.gz.enc | gunzip | psql -U postgres -d postgres`
 
 ## 8. Test end-to-end, still isolated
 
