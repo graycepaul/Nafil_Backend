@@ -1,15 +1,19 @@
+import uuid
 from unittest.mock import patch
+
+RESIDENT_1 = str(uuid.uuid4())
+RESIDENT_2 = str(uuid.uuid4())
 
 BATCH_BODY = {
     "items": [
         {
-            "profile_id": "resident-1",
+            "profile_id": RESIDENT_1,
             "title": "New announcement",
             "body": "Pool maintenance this weekend.",
             "data": {"announcement_id": "ann-1"},
         },
         {
-            "profile_id": "resident-2",
+            "profile_id": RESIDENT_2,
             "title": "New announcement",
             "body": "Pool maintenance this weekend.",
             "data": {"announcement_id": "ann-1"},
@@ -77,9 +81,17 @@ def test_notify_batch_sends_one_call_for_every_recipient(client, mock_db):
     # point of /notify-batch is that this is the only DB round trip and
     # send_push_messages is called exactly once, regardless of how many
     # items/recipients are in the batch.
+    #
+    # profile_id comes back as an actual uuid.UUID here, not a plain string -
+    # that's what PushToken.profile_id (a UUID column) really returns via
+    # SQLAlchemy. A prior version of this test used bare strings, which
+    # masked a real production bug: notify_batch keyed its dict by the
+    # request's string profile_ids but then looked it up with these UUID
+    # objects, so this exact query result 404'd through to a KeyError on
+    # every real request while this test kept passing.
     mock_db.execute.return_value = [
-        ("resident-1", "token-a"),
-        ("resident-2", "token-b"),
+        (uuid.UUID(RESIDENT_1), "token-a"),
+        (uuid.UUID(RESIDENT_2), "token-b"),
     ]
 
     with patch("app.routers.push.send_push_messages") as mock_send:
@@ -101,7 +113,7 @@ def test_notify_batch_sends_one_call_for_every_recipient(client, mock_db):
 def test_notify_batch_skips_recipients_with_no_tokens(client, mock_db):
     # resident-2 has no registered device - shouldn't error, just contribute
     # nothing to the outgoing message list.
-    mock_db.execute.return_value = [("resident-1", "token-a")]
+    mock_db.execute.return_value = [(uuid.UUID(RESIDENT_1), "token-a")]
 
     with patch("app.routers.push.send_push_messages") as mock_send:
         mock_send.return_value = (1, [], [])
