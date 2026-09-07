@@ -101,7 +101,12 @@ def notify_batch(
             PushToken.profile_id.in_(profile_ids)
         )
     ):
-        tokens_by_profile[profile_id].append(token)
+        # PushToken.profile_id is a UUID column - SQLAlchemy hands back
+        # uuid.UUID instances here, not the plain strings request.items
+        # carries (NotifyUserRequest.profile_id: str, straight off the JSON
+        # body) - str()'ing it is what makes this dict lookup actually match
+        # instead of KeyError'ing on every single recipient.
+        tokens_by_profile[str(profile_id)].append(token)
 
     messages: list[dict] = []
     for item in request.items:
