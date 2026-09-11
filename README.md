@@ -72,18 +72,15 @@ supabase/migrations/    # schema + RLS policies (source of truth)
 
 ## Database migrations
 
-Schema lives in `supabase/migrations/` and is applied via the Supabase SQL editor or
-`supabase db push`. The SQLAlchemy models are a **mapping**, not a migration tool - if you
-change a migration, update `app/models/models.py` to match.
+Schema lives in `supabase/migrations/`, applied in order against the production
+self-hosted database (not a Supabase Cloud project - that's deprecated, see
+`deploy/self-hosted/README.md`). The SQLAlchemy models are a **mapping**, not a migration
+tool - if you change a migration, update `app/models/models.py` to match.
 
-All four migrations are **already applied** to project `itfepppqjtodmizbglze` ("Nafil DB"):
-
-| # | Migration | What it does |
-|---|---|---|
-| 0001 | `init_core_schema` | Tables, enums, indexes, RLS policies |
-| 0002 | `auth_user_trigger` | Auto-create `profiles` row on signup |
-| 0003 | `move_helpers_to_private` | Move SECURITY DEFINER helpers out of the REST-exposed `public` schema |
-| 0004 | `rls_performance_and_fk_indexes` | InitPlan-wrap auth calls, consolidate policies, index FKs |
+All migrations up through the latest numbered file in `supabase/migrations/` are already
+applied to production. To apply a new one, copy it to the VPS and pipe it into
+`docker exec -i supabase-db psql -U postgres -d postgres` - see
+`deploy/self-hosted/README.md` for the exact command and the SSH details.
 
 ### Writing RLS policies
 
