@@ -11,9 +11,23 @@
 --
 -- Password for every account: NafilTest123!
 --
--- Applied to project itfepppqjtodmizbglze. Safe to re-run - the cleanup
+-- Originally applied to the deprecated Supabase Cloud project
+-- (itfepppqjtodmizbglze, now paused) and later re-applied to the current
+-- self-hosted production database (see deploy/self-hosted/). The cleanup
 -- block below removes only the seeded rows (@nafil.test users and the two
--- fixed estate UUIDs), nothing else.
+-- fixed estate UUIDs), nothing else - technically safe to re-run.
+--
+-- NOT actually safe to re-run against production without thinking first:
+-- Nafil Gardens (the first fixed estate UUID) is real production data now -
+-- it's the team's live internal test estate, deliberately kept and hidden
+-- from the resident-facing estate search (see
+-- 0043_hide_test_estate_from_directory.sql), not disposable seed data. Its
+-- four standing @nafil.test accounts (superadmin/admin/security/resident)
+-- are relied on for ongoing internal testing. Re-running this file's cleanup
+-- block would delete and recreate that estate, resetting its `hidden` flag
+-- and wiping any real activity recorded against it since seeding. Nafil
+-- Heights (the second fixed estate UUID) was already deleted from
+-- production deliberately - re-running this would silently bring it back.
 --
 -- NOTE: this inserts into auth.users directly, which is fine for test data
 -- but is not how you should create real accounts. Real signups go through
