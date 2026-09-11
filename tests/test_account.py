@@ -4,9 +4,9 @@ from app.core.security import CurrentUser, get_current_user
 from app.main import app
 
 
-def override_user():
+def override_user(role: str = "resident"):
     app.dependency_overrides[get_current_user] = lambda: CurrentUser(
-        id="user-1", email="test@example.com", role="resident", estate_id="estate-1"
+        id="user-1", email="test@example.com", role=role, estate_id="estate-1"
     )
 
 
@@ -49,3 +49,28 @@ def test_delete_account_already_deleted_is_success(client):
         response = client.delete("/account")
 
     assert response.status_code == 204
+
+
+def test_delete_account_blocks_staff_roles(client):
+    """Staff access (admin/security/finance) is institutional, not a personal
+    account someone unilaterally walks away with - only a super_admin ends
+    it. This is the actual enforcement boundary; the app's UI hiding the
+    button for these roles is not one on its own."""
+    for role in ("admin", "security", "finance"):
+        override_user(role)
+        with patch("app.routers.account.httpx.delete") as mock_delete:
+            response = client.delete("/account")
+
+        assert response.status_code == 403, f"expected 403 for role={role}"
+        mock_delete.assert_not_called()
+
+
+def test_delete_account_allows_resident_and_super_admin(client):
+    for role in ("resident", "super_admin"):
+        override_user(role)
+        with patch("app.routers.account.httpx.delete") as mock_delete:
+            mock_delete.return_value.status_code = 200
+            response = client.delete("/account")
+
+        assert response.status_code == 204, f"expected 204 for role={role}"
+        mock_delete.assert_called_once()

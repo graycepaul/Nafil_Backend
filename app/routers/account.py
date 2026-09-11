@@ -27,7 +27,19 @@ def delete_account(user: CurrentUser = Depends(get_current_user)) -> None:
     goal ("this account should not exist") is already true. Without this, a
     retry after an ambiguous first attempt surfaces a confusing "failed, try
     again" error for an account that was, in fact, already deleted.
+
+    Staff access (admin/security/finance) represents institutional trust, not
+    a personal account someone unilaterally walks away with - only a
+    super_admin gets to end it. The app's UI already hides this action for
+    those roles, but that's not an enforcement boundary on its own; this
+    check is what actually stops a direct API call from bypassing it.
     """
+    if user.role in ("admin", "security", "finance"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Staff accounts can only be removed by a super_admin.",
+        )
+
     resp = httpx.delete(
         f"{settings.supabase_url}/auth/v1/admin/users/{user.id}",
         headers={
