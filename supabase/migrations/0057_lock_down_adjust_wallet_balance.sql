@@ -1,0 +1,17 @@
+-- adjust_wallet_balance(delta) was re-declared SECURITY DEFINER in 0050 on
+-- the reasoning that wallets has no client UPDATE policy anymore, so this
+-- is "the only way balance changes". But it never checked anything about
+-- the caller or the amount, and Postgres grants EXECUTE on new functions to
+-- PUBLIC by default - so any signed-in user could call
+-- rpc('adjust_wallet_balance', { delta: 100000000 }) and credit their own
+-- wallet with any amount, then spend it through pay_dues_from_wallet.
+--
+-- Nothing legitimate calls it: wallet top-ups credit balance inside
+-- confirm_transfer (which checks the caller is estate staff), dues are paid
+-- through pay_dues_from_wallet, and the only remaining client reference is
+-- the card-payment branch in wallet.tsx, which no screen offers (no gateway
+-- is wired up). So it's simply closed to every API role; the function is
+-- left in place for whenever a real payment gateway needs a server-side
+-- credit path, which should be a proper, validated function of its own
+-- rather than this one reopened.
+revoke execute on function public.adjust_wallet_balance(integer) from public, anon, authenticated;
