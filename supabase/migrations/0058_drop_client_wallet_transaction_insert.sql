@@ -1,0 +1,14 @@
+-- wallet_transactions_insert let any resident insert their own ledger rows
+-- (profile_id = auth.uid()) - so a resident could forge "Wallet top-up"
+-- entries in their own history, and get_financials_overview() sums exactly
+-- those rows for super_admin's "confirmed top-ups" total. It never changed
+-- a balance (that's wallets.balance, which has no client write path since
+-- 0050/0057), but it made the ledger untrustworthy.
+--
+-- Every legitimate ledger write already happens server-side inside
+-- SECURITY DEFINER functions (confirm_transfer for top-ups and bank-transfer
+-- payments, pay_dues_from_wallet for wallet payments), which bypass RLS. The
+-- only client insert was the card-funding branch in wallet.tsx, removed in
+-- the same change - no screen ever offered it. Ledger is now append-only
+-- from the server side alone.
+drop policy wallet_transactions_insert on wallet_transactions;
