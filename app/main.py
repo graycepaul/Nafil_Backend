@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import account, alerts, health, push, reports
+from app.routers import account, alerts, devcontrol, health, push, reports
 from app.services.scheduler import register_jobs, scheduler
 
 if settings.sentry_dsn:
@@ -63,4 +63,5 @@ app.include_router(health.router)
 app.include_router(reports.router)
 app.include_router(alerts.router)
 app.include_router(account.router)
+app.include_router(devcontrol.router)
 app.include_router(push.router)
