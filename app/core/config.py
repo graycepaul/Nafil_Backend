@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     # e.g. a Vercel preview URL.
     cors_origins: list[str] = [
         "https://app.nafilestates.com",
+        "https://devadmin.nafilestates.com",
         "http://localhost:8081",
     ]
 

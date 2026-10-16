@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timezone
+from datetime import UTC, date, datetime, time
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -52,8 +52,8 @@ def visitor_report(
             status_code=status.HTTP_404_NOT_FOUND, detail="Estate not found"
         )
 
-    start_dt = datetime.combine(start_date, time.min, tzinfo=timezone.utc)
-    end_dt = datetime.combine(end_date, time.max, tzinfo=timezone.utc)
+    start_dt = datetime.combine(start_date, time.min, tzinfo=UTC)
+    end_dt = datetime.combine(end_date, time.max, tzinfo=UTC)
 
     logs = db.scalars(
         select(VisitorLog)
