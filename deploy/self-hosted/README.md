@@ -176,3 +176,25 @@ This is the one step covered in the infrastructure plan's Phase 3, not here -
 it involves a real data migration and a maintenance window, and shouldn't
 happen until this stack has been tested and the guardrails have been proven
 to actually alert you.
+
+## Auto-deploy from the `prod` branch
+
+`.github/workflows/deploy.yml` deploys on every push to `prod`. One-time setup:
+
+1. On your machine, generate a dedicated key (no passphrase):
+   `ssh-keygen -t ed25519 -f ~/nafil_deploy_key -C github-actions-deploy -N ""`
+2. On the VPS, append this line to `~/.ssh/authorized_keys` as `deploy`, with
+   the contents of `~/nafil_deploy_key.pub` in place of `<PUBLIC KEY>`. The
+   forced command means the key can do nothing but deploy:
+
+   ```
+   restrict,command="cd ~/nafil-backend && git fetch -q origin prod && git checkout -q prod && git merge --ff-only origin/prod && exec bash deploy/self-hosted/deploy.sh" <PUBLIC KEY>
+   ```
+3. In GitHub (repo Settings, Secrets and variables, Actions) add:
+   `VPS_HOST` (`vps.nafilestates.com`), `VPS_USER` (`deploy`), `VPS_SSH_KEY`
+   (the private key file contents), and `VPS_KNOWN_HOSTS` (output of
+   `ssh-keyscan -t ed25519 vps.nafilestates.com`, checked against the host
+   key you already trust).
+4. Create a `production` environment under Settings, Environments. Optionally
+   add yourself as a required reviewer to approve each deploy.
+5. Delete the local private key once it is stored in GitHub.
