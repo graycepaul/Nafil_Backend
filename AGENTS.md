@@ -42,9 +42,13 @@ Key-based, no password. `root@` login is disabled by design.
    FastAPI `api` service (`deploy/self-hosted/docker-compose.backend.yml` +
    `.env.backend`).
 
-**Merging or pushing to GitHub does not deploy anything by itself.** The
-VPS's `~/nafil-backend` checkout needs an explicit `git pull` and rebuild —
-this has already caused a real incident (see below).
+**Merging to `main` does not deploy anything.** Merging to the `prod` branch
+does: `.github/workflows/deploy.yml` runs lint and tests, then SSHes to the VPS
+with a restricted deploy key whose forced command fast-forwards
+`~/nafil-backend` to `origin/prod` and runs `deploy/self-hosted/deploy.sh`.
+Migrations are still applied by hand (see below), and must be applied before
+you merge code that depends on them. A manual deploy (below) is still the
+fallback if the workflow is down.
 
 ## Applying a new migration
 
