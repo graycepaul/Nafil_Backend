@@ -24,7 +24,7 @@ def _one(db: Session, sql: str) -> dict[str, Any]:
 @router.get("/overview")
 def overview(
     db: Session = Depends(get_db),
-    _: CurrentUser = Depends(require_roles("super_admin")),
+    _: CurrentUser = Depends(require_roles("dev_admin")),
 ) -> dict[str, Any]:
     """
     Aggregate-only snapshot for the devControl dashboard. Reads auth.users
@@ -50,8 +50,15 @@ def overview(
 
     roles = _rows(
         db,
-        "select role, count(*) as count, count(*) filter (where approved) as approved "
-        "from profiles group by role order by count desc",
+        """
+        select r::text as role,
+               count(p.id) as count,
+               count(p.id) filter (where p.approved) as approved
+        from unnest(enum_range(null::user_role)) r
+        left join profiles p on p.role = r
+        group by r
+        order by count(p.id) desc, r::text
+        """,
     )
 
     signups_weekly = _rows(
@@ -134,7 +141,7 @@ def overview(
 @router.get("/estates")
 def estates(
     db: Session = Depends(get_db),
-    _: CurrentUser = Depends(require_roles("super_admin")),
+    _: CurrentUser = Depends(require_roles("dev_admin")),
 ) -> list[dict[str, Any]]:
     return _rows(
         db,
@@ -160,7 +167,7 @@ def estates(
 @router.get("/users")
 def users(
     db: Session = Depends(get_db),
-    _: CurrentUser = Depends(require_roles("super_admin")),
+    _: CurrentUser = Depends(require_roles("dev_admin")),
 ) -> list[dict[str, Any]]:
     """Newest first. Name, email, role, estate and sign-in times only: no phone, no unit."""
     return _rows(
