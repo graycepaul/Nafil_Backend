@@ -8,6 +8,11 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 echo "Deploying $(git rev-parse --short HEAD): $(git log -1 --format=%s)"
+
+# Schema first: a failed migration stops the deploy with the old container still
+# running. Migrations must be backward compatible with the code currently live.
+./migrate.sh
+
 docker compose -f docker-compose.backend.yml up -d --build
 
 for i in $(seq 1 30); do

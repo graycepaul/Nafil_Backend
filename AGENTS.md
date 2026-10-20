@@ -46,9 +46,16 @@ Key-based, no password. `root@` login is disabled by design.
 does: `.github/workflows/deploy.yml` runs lint and tests, then SSHes to the VPS
 with a restricted deploy key whose forced command fast-forwards
 `~/nafil-backend` to `origin/prod` and runs `deploy/self-hosted/deploy.sh`.
-Migrations are still applied by hand (see below), and must be applied before
-you merge code that depends on them. A manual deploy (below) is still the
-fallback if the workflow is down.
+`deploy.sh` first runs `deploy/self-hosted/migrate.sh`, which applies any
+migration file in `supabase/migrations` not yet recorded in
+`public.schema_migrations` (each in its own transaction; a failure stops the
+deploy with the old container still running), then rebuilds the API container.
+
+Because migrations run before the new code goes live, they must work with the
+code that is currently live. A migration whose trigger calls an endpoint that
+doesn't exist yet (the 2026-09-07 `0041` incident) needs two merges: code
+first, migration second. A manual deploy (below) is still the fallback if the
+workflow is down.
 
 ## Applying a new migration
 
@@ -59,6 +66,11 @@ ssh deploy@vps.nafilestates.com "docker exec -i supabase-db psql -U postgres -d 
 
 Watch the output for `ERROR` lines — a partial failure part-way through
 still prints `CREATE FUNCTION`/etc. for the statements that succeeded.
+
+This is the manual fallback. Normally `prod` merges apply migrations for you
+(see above). If you apply one by hand, also record it, or the next deploy will
+try to run it again:
+`insert into public.schema_migrations (name) values ('00XX_name.sql');`
 
 ## Deploying a backend code change
 

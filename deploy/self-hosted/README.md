@@ -198,3 +198,23 @@ to actually alert you.
 4. Create a `production` environment under Settings, Environments. Optionally
    add yourself as a required reviewer to approve each deploy.
 5. Delete the local private key once it is stored in GitHub.
+
+## Automatic migrations
+
+`deploy.sh` runs `migrate.sh` before rebuilding the API. It applies, in filename
+order, every file in `supabase/migrations` that is not listed in
+`public.schema_migrations`, each in a single transaction together with its
+tracking row. If one fails it rolls back, nothing later runs, and the deploy
+stops before touching the running container.
+
+- `DRY_RUN=1 ./migrate.sh` lists what is pending without changing anything.
+- One-time setup, before the first deploy that includes `migrate.sh`: record
+  the migrations that are already applied, without running them. From your
+  machine (replace `0061` with the number of the last migration applied):
+
+  ```
+  ssh deploy@vps.nafilestates.com 'REPO_ROOT=~/nafil-backend bash -s -- --baseline 0061' < deploy/self-hosted/migrate.sh
+  ```
+
+  Until this is done, `migrate.sh` refuses to run so it can never replay
+  `0001`...`0061` against a live database.
