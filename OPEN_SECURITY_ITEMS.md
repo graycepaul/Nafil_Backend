@@ -8,6 +8,12 @@ file rather than letting them live only in chat history.
 
 ## Open
 
+- [ ] **Configure SMTP for the auth service.** Password reset is broken for every
+      user until this is done; see `deploy/self-hosted/SMTP_SETUP.md`.
+- [ ] **Retire `accept_staff_invite_by_email`** (migration 0061's narrowed version is
+      still exploitable by anyone who knows an invited email within 24 hours of
+      the invitee saving their profile). New app builds use `accept_staff_invite`
+      (code and email); drop the old function once released builds have updated.
 - [ ] **Pick an offsite backup target.** `deploy/self-hosted/backup.sh`
       encrypts nightly dumps (AES-256) but still only writes to
       `~/backups` on the same VPS - if the VPS is lost, the backups are
