@@ -27,3 +27,8 @@ def test_devcontrol_rejects_estate_roles(client):
 def test_devcontrol_rejects_resident(client):
     override_user(role="resident")
     assert client.get("/devcontrol/users").status_code == 403
+
+
+def test_devcontrol_rejects_unknown_scope(client):
+    override_user(role="dev_admin")
+    assert client.get("/devcontrol/overview?scope=everything").status_code == 422
