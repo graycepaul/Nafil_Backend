@@ -1,7 +1,9 @@
 import time
 from typing import Any, Literal
+from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -23,27 +25,44 @@ TEST_ESTATE_NAMES = ["Demo Gardens"]
 # carry an `is_test` flag. Content tables are split by joining through their
 # estate_id or profile_id.
 _CLASSIFY = """
-with test_estates as (
-  select id from estates where name = any(:test_estates)
+with flags as (
+  select kind, ref_id from devcontrol_test_flags
+),
+test_estates as (
+  select id, (name = any(:test_estates)) as by_rule from estates
+  where name = any(:test_estates)
+     or id in (select ref_id from flags where kind = 'estate')
 ),
 cu as (
   select u.id, u.email, u.created_at, u.last_sign_in_at, u.email_confirmed_at,
          p.role::text as role, p.approved, p.estate_id, p.full_name,
-         -- coalesce: a user with no profile or no estate yields NULL on those
-         -- terms, which would otherwise make the whole flag NULL (neither
-         -- live nor test).
-         coalesce(
-           lower(coalesce(u.email, '')) like any(:email_patterns)
-           or lower(coalesce(u.email, '')) = any(:test_emails)
-           or p.estate_id in (select id from test_estates)
-           or p.role::text = 'dev_admin',
-           false) as is_test
+         x.rule_test, x.manual_test,
+         (x.rule_test or x.manual_test) as is_test,
+         case when x.rule_test then 'rule'
+              when x.manual_test then 'manual' end as test_source
   from auth.users u
   left join profiles p on p.id = u.id
+  cross join lateral (
+    -- coalesce: a user with no profile or no estate yields NULL on some
+    -- terms, which would otherwise make the flag NULL (neither live nor test).
+    select
+      coalesce(
+        lower(coalesce(u.email, '')) like any(:email_patterns)
+        or lower(coalesce(u.email, '')) = any(:test_emails)
+        or p.role::text = 'dev_admin'
+        or p.estate_id in (select id from test_estates where by_rule),
+        false) as rule_test,
+      coalesce(
+        u.id in (select ref_id from flags where kind = 'user')
+        or p.estate_id in (select id from test_estates where not by_rule),
+        false) as manual_test
+  ) x
 ),
 ce as (
   select e.id, e.name, e.created_at,
-         (e.id in (select id from test_estates)) as is_test
+         (e.id in (select id from test_estates)) as is_test,
+         case when e.id in (select id from test_estates where by_rule) then 'rule'
+              when e.id in (select id from test_estates) then 'manual' end as test_source
   from estates e
 )
 """
@@ -51,10 +70,13 @@ ce as (
 Scope = Literal["live", "test"]
 
 
-def _rows(db: Session, sql: str, scope: Scope) -> list[dict[str, Any]]:
+def _rows(
+    db: Session, sql: str, scope: Scope, extra: dict[str, Any] | None = None
+) -> list[dict[str, Any]]:
     result = db.execute(
         text(_CLASSIFY + sql),
         {
+            **(extra or {}),
             "t": scope == "test",
             "test_estates": TEST_ESTATE_NAMES,
             "email_patterns": TEST_EMAIL_PATTERNS,
@@ -64,8 +86,10 @@ def _rows(db: Session, sql: str, scope: Scope) -> list[dict[str, Any]]:
     return [dict(r) for r in result.mappings().all()]
 
 
-def _one(db: Session, sql: str, scope: Scope) -> dict[str, Any]:
-    return _rows(db, sql, scope)[0]
+def _one(
+    db: Session, sql: str, scope: Scope, extra: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    return _rows(db, sql, scope, extra)[0]
 
 
 @router.get("/overview")
@@ -238,6 +262,7 @@ def estates(
           ce.id::text as id,
           ce.name,
           ce.created_at,
+          ce.test_source,
           (select count(*) from profiles p where p.estate_id = ce.id) as members,
           (select count(*) from profiles p where p.estate_id = ce.id and p.approved) as approved_members,
           (select count(*) from issues i where i.estate_id = ce.id) as issues,
@@ -272,7 +297,8 @@ def users(
           cu.approved,
           ce.name as estate,
           cu.created_at,
-          cu.last_sign_in_at
+          cu.last_sign_in_at,
+          cu.test_source
         from cu
         left join ce on ce.id = cu.estate_id
         where cu.is_test = :t
@@ -281,3 +307,57 @@ def users(
         """,
         scope,
     )
+
+
+class FlagRequest(BaseModel):
+    kind: Literal["user", "estate"]
+    id: UUID
+    test: bool
+
+
+@router.post("/flags")
+def set_flag(
+    body: FlagRequest,
+    db: Session = Depends(get_db),
+    user: CurrentUser = Depends(require_roles("dev_admin")),
+) -> dict[str, Any]:
+    """
+    Move one user or estate into (test=true) or out of (test=false) the test
+    view. Flags are additive to the built-in rules, so an account matched by a
+    rule (a @nafil.test email, Demo Gardens) can't be moved back to live here.
+    """
+    table = "auth.users" if body.kind == "user" else "estates"
+    exists = db.execute(
+        text(f"select 1 from {table} where id = cast(:id as uuid)"),
+        {"id": str(body.id)},
+    ).first()
+    if exists is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+
+    if body.test:
+        db.execute(
+            text(
+                "insert into devcontrol_test_flags (kind, ref_id, flagged_by) "
+                "values (:kind, cast(:id as uuid), cast(:by as uuid)) on conflict do nothing"
+            ),
+            {"kind": body.kind, "id": str(body.id), "by": user.id},
+        )
+    else:
+        db.execute(
+            text(
+                "delete from devcontrol_test_flags "
+                "where kind = :kind and ref_id = cast(:id as uuid)"
+            ),
+            {"kind": body.kind, "id": str(body.id)},
+        )
+    db.commit()
+
+    scope_after = _one(
+        db,
+        f"select {'cu' if body.kind == 'user' else 'ce'}.is_test as is_test, "
+        f"{'cu' if body.kind == 'user' else 'ce'}.test_source as source "
+        f"from {'cu' if body.kind == 'user' else 'ce'} where id = cast(:target as uuid)",
+        "live",
+        extra={"target": str(body.id)},
+    )
+    return {"is_test": scope_after["is_test"], "source": scope_after["source"]}
